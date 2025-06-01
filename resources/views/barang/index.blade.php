@@ -22,7 +22,9 @@
                 <tr>
                     <th class="text-center align-middle">No</th>
                     <th class="text-center align-middle">Nama Barang</th>
-                    <th class="text-center align-middle">Kategori</th> {{-- KOLOM BARU --}}
+                    <th class="text-center align-middle">Kategori</th>
+                    <th class="text-center align-middle">Unit</th>
+                    <th class="text-center align-middle">Lokasi</th>
                     <th class="text-center align-middle">Kode</th>
                     <th class="text-center align-middle">Stok</th>
                     <th class="text-center align-middle">Status</th>
@@ -35,6 +37,8 @@
                         <td class="text-center align-middle">{{ $barangs->firstItem() + $key }}</td>
                         <td class="align-middle">{{ $barang->nama_barang }}</td> {{-- Biarkan nama barang rata kiri --}}
                         <td class="align-middle">{{ $barang->kategori->nama_kategori ?? '-' }}</td>
+                        <td class="align-middle">{{ $barang->unit->singkatan_unit ?? ($barang->unit->nama_unit ?? '-') }}</td>
+                        <td class="align-middle">{{ $barang->lokasi->nama_lokasi ?? '-' }}</td>
                         <td class="text-center align-middle">{{ $barang->kode_barang ?? '-' }}</td>
                         <td class="text-center align-middle">{{ $barang->stok }}</td>
                         <td class="text-center align-middle">

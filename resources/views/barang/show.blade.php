@@ -38,6 +38,16 @@
                         </tr>
 
                         <tr>
+                            <th style="width: 180px;">Unit</th>
+                            <td>: {{ $barang->unit->nama_unit ?? ($barang->unit->singkatan_unit ?? 'Tidak Ada Unit') }}</td>
+                        </tr>
+
+                        <tr>
+                            <th style="width: 180px;">Lokasi</th>
+                            <td>: {{ $barang->lokasi->nama_lokasi ?? 'Tidak Ada Lokasi' }} {{ $barang->lokasi?->kode_lokasi ? '(' . $barang->lokasi->kode_lokasi . ')' : '' }}</td>
+                        </tr>
+
+                        <tr>
                             <th>Stok</th>
                             <td>{{ $barang->stok }}</td>
                         </tr>

@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Barang;
 use App\Models\Kategori;
+use App\Models\Unit;
+use App\Models\Lokasi;
 use Illuminate\Http\Request;
 
 class BarangController extends Controller
@@ -13,7 +15,7 @@ class BarangController extends Controller
      */
     public function index()
     {
-        $barangs = Barang::with('kategori')->orderBy('created_at', 'desc')->paginate(10);
+        $barangs = Barang::with(['kategori', 'unit', 'lokasi'])->orderBy('created_at', 'desc')->paginate(10);
         // $barangs = Barang::orderBy('created_at', 'desc')->paginate(10); // Ambil semua barang, urutkan & paginasi
         return view('barang.index', compact('barangs')); // Kirim data ke view
     }
@@ -24,7 +26,9 @@ class BarangController extends Controller
     public function create()
     {
         $kategoris = Kategori::orderBy('nama_kategori', 'asc')->get(); // Ambil semua kategori
-        return view('barang.create', compact('kategoris')); // Kirim data kategoris ke view
+        $units = Unit::orderBy('nama_unit', 'asc')->get();
+        $lokasis = Lokasi::orderBu('nama_lokasi', 'asc')->get();
+        return view('barang.create', compact('kategoris', 'units', 'lokasis')); // Kirim data kategoris ke view
     }
 
     /**
@@ -38,6 +42,8 @@ class BarangController extends Controller
             'kode_barang' => 'nullable|string|max:50|unique:barangs,kode_barang',
             'deskripsi'   => 'nullable|string',
             'kategori_id' => 'nullable|exists:kategoris,id', // Validasi bahwa kategori_id ada di tabel kategoris
+            'unit_id'     => 'nullable|exists:units,id',
+            'lokasi_id'   => 'nullable|exists:lokasis,id',
             'stok'        => 'nullable|integer|min:0',
             'harga_beli'  => 'nullable|numeric|min:0',
             'status'      => 'required|in:aktif,rusak,hilang,dipinjam',
@@ -81,7 +87,9 @@ class BarangController extends Controller
     public function edit(Barang $barang)
     {
         $kategoris = Kategori::orderBy('nama_kategori', 'asc')->get(); // Ambil semua kategori
-        return view('barang.edit', compact('barang', 'kategoris')); // Kirim data barang dan kategoris
+        $units = Unit::orderBy('nama_unit', 'asc')->get();
+        $lokasis = Lokasi::orderBy('nama_lokasi', 'asc')->get();
+        return view('barang.edit', compact('barang', 'kategoris', 'units', 'lokasis')); // Kirim data barang dan kategoris
     }
 
     /**
@@ -95,6 +103,8 @@ class BarangController extends Controller
             'kode_barang' => 'nullable|string|max:50|unique:barangs,kode_barang,' . $barang->id,
             'deskripsi'   => 'nullable|string',
             'kategori_id' => 'nullable|exists:kategoris,id', // Validasi bahwa kategori_id ada di tabel kategoris
+            'unit_id'     => 'nullable|exists:units,id',
+            'lokasi_id'   => 'nullable|exists:lokasis,id',
             'stok'        => 'nullable|integer|min:0',
             'harga_beli'  => 'nullable|numeric|min:0',
             'status'      => 'required|in:aktif,rusak,hilang,dipinjam',

@@ -64,6 +64,40 @@
                         @enderror
                     </div>
 
+                    <div class="mb-3">
+                        <label for="unit_id" class="form-label">Unit Barang (Opsional)</label>
+                        <select class="form-select @error('unit_id') is-invalid @enderror" id="unit_id" name="unit_id">
+                            <option value="">-- Pilih Unit --</option>
+                            @foreach ($units as $itemUnit) {{-- Ganti nama variabel agar tidak konflik --}}
+                                <option value="{{ $itemUnit->id }}" {{ old('unit_id', $barang->unit_id) == $itemUnit->id ? 'selected' : '' }}>
+                                    {{ $itemUnit->nama_unit }} ({{ $itemUnit->singkatan_unit ?? '' }})
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('unit_id')
+                            <div class="invalid-feedback">
+                                {{ $message }}
+                            </div>
+                        @enderror
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="lokasi_id" class="form-label">Lokasi Penempatan (Opsional)</label>
+                        <select class="form-select @error('lokasi_id') is-invalid @enderror" id="lokasi_id" name="lokasi_id">
+                            <option value="">-- Pilih Lokasi --</option>
+                            @foreach ($lokasis as $itemLokasi) {{-- Ganti nama variabel agar tidak konflik --}}
+                                <option value="{{ $itemLokasi->id }}" {{ old('lokasi_id', $barang->lokasi_id) == $itemLokasi->id ? 'selected' : '' }}>
+                                    {{ $itemLokasi->nama_lokasi }} {{ $itemLokasi->kode_lokasi ? '(' . $itemLokasi->kode_lokasi . ')' : '' }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('lokasi_id')
+                            <div class="invalid-feedback">
+                                {{ $message }}
+                            </div>
+                        @enderror
+                    </div>
+
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="stok" class="form-label">Stok</label>
