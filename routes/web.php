@@ -1,33 +1,5 @@
 <?php
 
-// app()->booted(function () {
-//     if (request()->is('barang')) { // Hanya dd jika mengakses route /barang untuk membatasi efeknya
-//         dd(config('permission.models.permission'));
-//     }
-// });
-
-// app()->booted(function () {
-//     if (request()->is('barang')) { // Hanya dd jika mengakses route /barang
-//         try {
-//             $permissionInstance = resolve(Spatie\Permission\Contracts\Permission::class);
-//             dd("Berhasil me-resolve PermissionContract. Instance:", $permissionInstance, "Config value:", config('permission.models.permission'));
-//         } catch (\Exception $e) {
-//             dd("Gagal me-resolve PermissionContract. Error:", $e->getMessage(), "Config value:", config('permission.models.permission'));
-//         }
-//     }
-// });
-
-// app()->booted(function () {
-//     if (request()->is('barang')) { // Hanya dd jika mengakses route /barang
-//         try {
-//             $permissionModel = new \Spatie\Permission\Models\Permission(); // Coba buat instance langsung
-//             dd("Berhasil membuat instance Spatie\Permission\Models\Permission secara langsung.", $permissionModel);
-//         } catch (\Throwable $e) { // Menangkap semua jenis error/exception
-//             dd("GAGAL membuat instance Spatie\Permission\Models\Permission secara langsung. Error:", $e->getMessage(), $e);
-//         }
-//     }
-// });
-
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\ProfileController;
@@ -36,6 +8,7 @@ use App\Http\Controllers\KategoriController;
 use App\Http\Controllers\UnitController;
 use App\Http\Controllers\LokasiController;
 use App\Http\Controllers\StockMovementController;
+use App\Http\Controllers\Admin\UserController;
 
 /*
 |--------------------------------------------------------------------------
@@ -77,6 +50,13 @@ Route::middleware(['auth', 'verified'])->group(function () { // Menggunakan 'aut
 
     Route::get('/stok/keluar/create', [StockMovementController::class, 'createKeluar'])->name('stok.keluar.create');
     Route::post('/stok/keluar', [StockMovementController::class, 'storeKeluar'])->name('stok.keluar.store');
+
+        // === ROUTE UNTUK MANAJEMEN PENGGUNA OLEH ADMIN ===
+    // Kita bisa grouping dengan prefix 'admin' agar lebih rapi URL-nya
+    Route::prefix('admin')->name('admin.')->group(function () {
+        Route::resource('users', UserController::class);
+        // Anda bisa tambahkan route lain khusus admin di sini
+    });
 
     // Anda bisa menambahkan route lain yang memerlukan login di sini
     // Misalnya, nanti untuk manajemen stok, laporan, dll.

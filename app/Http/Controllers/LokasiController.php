@@ -14,6 +14,9 @@ class LokasiController extends Controller
      */
     public function index()
     {
+        if (!Auth::user()->hasPermissionTo('lokasi-list')) {
+            abort(403, 'AKSES DITOLAK: Anda tidak memiliki izin untuk melihat daftar lokasi.');
+        }
         $lokasis = Lokasi::withCount('barangs')->orderBy('nama_lokasi', 'asc')->paginate(10);
         return view('lokasi.index', compact('lokasis'));
     }
@@ -23,6 +26,9 @@ class LokasiController extends Controller
      */
     public function create()
     {
+        if (!Auth::user()->hasPermissionTo('lokasi-list')) {
+            abort(403, 'AKSES DITOLAK: Anda tidak memiliki izin untuk melihat daftar lokasi.');
+        }
         return view('lokasi.create');
     }
 
@@ -71,6 +77,9 @@ class LokasiController extends Controller
      */
     public function update(Request $request, Lokasi $lokasi) // Route Model Binding
     {
+        if (!Auth::user()->hasPermissionTo('lokasi-list')) {
+            abort(403, 'AKSES DITOLAK: Anda tidak memiliki izin untuk melihat daftar lokasi.');
+        }
         $validatedData = $request->validate([
             'nama_lokasi' => 'required|string|max:255|unique:lokasis,nama_lokasi,' . $lokasi->id,
             'kode_lokasi' => 'nullable|string|max:50|unique:lokasis,kode_lokasi,' . $lokasi->id,
@@ -87,6 +96,9 @@ class LokasiController extends Controller
      */
     public function destroy(Lokasi $lokasi) // Route Model Binding
     {
+        if (!Auth::user()->hasPermissionTo('lokasi-list')) {
+            abort(403, 'AKSES DITOLAK: Anda tidak memiliki izin untuk melihat daftar lokasi.');
+        }
         $lokasi->delete();
 
         return redirect()->route('lokasi.index')->with('success', 'Lokasi berhasil dihapus! Barang yang terkait telah diatur ulang (tidak memiliki lokasi).');

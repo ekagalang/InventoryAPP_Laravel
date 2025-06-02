@@ -1,22 +1,3 @@
-@php
-    if (Auth::check()) { // Pastikan hanya berjalan jika user sudah login
-        // Menggunakan dd() akan menghentikan eksekusi dan menampilkan info ini.
-        // HAPUS ATAU KOMENTARI SETELAH SELESAI DEBUGGING.
-        //
-        // Jika Anda ingin tetap melanjutkan render halaman setelah ini,
-        // Anda bisa menggunakan Log::info() atau var_dump() lalu die(),
-        // tapi dd() paling mudah untuk dilihat.
-        //
-        /* dd(
-            'DEBUGGING USER:',
-            'User ID: ' . Auth::id(),
-            'User Name: ' . Auth::user()->name,
-            'Roles: ' . Auth::user()->getRoleNames()->implode(', '),
-            'Permissions: ' . Auth::user()->getAllPermissions()->pluck('name')->implode(', ')
-        ); */
-    }
-@endphp
-
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
@@ -74,7 +55,7 @@
                             </ul>
                         </li>
                     @endhasanyrole 
-                    @role('Admin|StafGudang') {{-- Tampil untuk Admin ATAU StafGudang --}}
+                    @canany(['stok-pergerakan-list', 'stok-masuk-create', 'stok-keluar-create'])
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle {{ request()->routeIs('stok.*') ? 'active' : '' }}" href="#" id="navbarDropdownStok" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 Manajemen Stok
@@ -86,13 +67,20 @@
                                 @can('stok-keluar-create')
                                     <li><a class="dropdown-item {{ request()->routeIs('stok.keluar.create') ? 'active' : '' }}" href="{{ route('stok.keluar.create') }}">Catat Barang Keluar</a></li>
                                 @endcan
-                                @can('stok-pergerakan-list')
+                                @if(Auth::user()->hasPermissionTo('stok-masuk-create') && Auth::user()->hasPermissionTo('stok-keluar-create') && Auth::user()->hasPermissionTo('stok-pergerakan-list'))
                                     <li><hr class="dropdown-divider"></li>
+                                @endif
+                                @can('stok-pergerakan-list')
                                     <li><a class="dropdown-item {{ request()->routeIs('stok.pergerakan.index') ? 'active' : '' }}" href="{{ route('stok.pergerakan.index') }}">Riwayat Pergerakan</a></li>
                                 @endcan
                             </ul>
                         </li>
-                    @endrole
+                    @endcanany
+                        @can('user-list') {{-- Atau @role('Admin') --}}
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}" href="{{ route('admin.users.index') }}">Manajemen User</a>
+                            </li>
+                        @endcan
                     @endauth
                 </ul>
                 <ul class="navbar-nav ms-auto"> {{-- Navigasi otentikasi di kanan --}}

@@ -5,7 +5,11 @@
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h1>Daftar Lokasi Penempatan</h1>
-    <a href="{{ route('lokasi.create') }}" class="btn btn-primary">Tambah Lokasi Baru</a>
+@can('lokasi-create')
+    <div class="mb-3">
+        <a href="{{ route('lokasi.create') }}" class="btn btn-primary"><i class="bi bi-plus-circle"></i> Tambah Lokasi Baru</a>
+    </div>
+@endcan
 </div>
 
 @if (session('success'))
@@ -43,12 +47,16 @@
                         <td>{{ Str::limit($lokasi->deskripsi_lokasi, 50, '...') ?? '-' }}</td>
                         <td>{{ $lokasi->barangs_count }}</td>
                         <td>
-                            <a href="{{ route('lokasi.edit', $lokasi->id) }}" class="btn btn-warning btn-sm" title="Edit"><i class="bi bi-pencil-square"></i> Edit</a>
-                            <form action="{{ route('lokasi.destroy', $lokasi->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus lokasi ini? Barang yang terkait dengan lokasi ini akan diatur ulang (tidak memiliki lokasi).');">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn btn-danger btn-sm" title="Hapus"><i class="bi bi-trash"></i> Hapus</button>
-                            </form>
+                            @can('lokasi-edit')
+                                <a href="{{ route('lokasi.edit', $lokasi->id) }}" class="btn btn-warning btn-sm" title="Edit"><i class="bi bi-pencil-square"></i> Edit</a>
+                            @endcan
+                            @can('lokasi-delete')
+                                <form action="{{ route('lokasi.destroy', $lokasi->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus lokasi ini?');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-danger btn-sm" title="Hapus"><i class="bi bi-trash"></i> Hapus</button>
+                                </form>
+                            @endcan
                         </td>
                     </tr>
                 @empty

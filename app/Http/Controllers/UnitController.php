@@ -14,6 +14,9 @@ class UnitController extends Controller
      */
     public function index()
     {
+        if (!Auth::user()->hasPermissionTo('unit-list')) {
+            abort(403, 'AKSES DITOLAK: Anda tidak memiliki izin untuk melihat daftar unit.');
+        }
         // Eager load barangs_count untuk optimasi
         $units = Unit::withCount('barangs')->orderBy('nama_unit', 'asc')->paginate(10);
         return view('unit.index', compact('units'));
@@ -24,6 +27,9 @@ class UnitController extends Controller
      */
     public function create()
     {
+        if (!Auth::user()->hasPermissionTo('unit-list')) {
+            abort(403, 'AKSES DITOLAK: Anda tidak memiliki izin untuk melihat daftar unit.');
+        }
         return view('unit.create');
     }
 
@@ -72,6 +78,9 @@ class UnitController extends Controller
      */
     public function update(Request $request, Unit $unit) // Route Model Binding
     {
+        if (!Auth::user()->hasPermissionTo('unit-list')) {
+            abort(403, 'AKSES DITOLAK: Anda tidak memiliki izin untuk melihat daftar unit.');
+        }
         $validatedData = $request->validate([
             'nama_unit' => 'required|string|max:255|unique:units,nama_unit,' . $unit->id,
             'singkatan_unit' => 'nullable|string|max:50|unique:units,singkatan_unit,' . $unit->id,
@@ -88,6 +97,9 @@ class UnitController extends Controller
      */
     public function destroy(Unit $unit) // Route Model Binding
     {
+        if (!Auth::user()->hasPermissionTo('unit-list')) {
+            abort(403, 'AKSES DITOLAK: Anda tidak memiliki izin untuk melihat daftar unit.');
+        }
         $unit->delete();
 
         return redirect()->route('unit.index')->with('success', 'Unit berhasil dihapus! Barang yang terkait telah diatur ulang (tidak memiliki unit).');

@@ -7,10 +7,14 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h1>Riwayat Pergerakan Stok</h1>
         
-        <div>
+    <div>
+        @can('stok-masuk-create')
             <a href="{{ route('stok.masuk.create') }}" class="btn btn-success"><i class="bi bi-plus-circle"></i> Catat Barang Masuk</a>
-            <a href="{{ route('stok.keluar.create') }}" class="btn btn-danger"><i class="bi bi-dash-circle"></i> Catat Barang Keluar</a>
-        </div>
+        @endcan
+        @can('stok-keluar-create')
+            <a href="{{ route('stok.keluar.create') }}" class="btn btn-danger ms-1"><i class="bi bi-dash-circle"></i> Catat Barang Keluar</a>
+        @endcan
+    </div>
     </div>
 
     @if (session('success'))

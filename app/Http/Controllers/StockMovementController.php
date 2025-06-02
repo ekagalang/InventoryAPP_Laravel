@@ -15,6 +15,9 @@ class StockMovementController extends Controller
      */
     public function createMasuk()
     {
+        if (!Auth::user()->hasPermissionTo('stok-pergerakan-list')) {
+            abort(403, 'AKSES DITOLAK: Anda tidak memiliki izin untuk melihat riwayat pergerakan stok.');
+        }
         $barangs = Barang::orderBy('nama_barang', 'asc')->get(); // Ambil semua barang untuk dipilih
         return view('stok.create_masuk', compact('barangs'));
     }
@@ -22,6 +25,9 @@ class StockMovementController extends Controller
     // ... (method createMasuk sudah ada)
     public function storeMasuk(Request $request)
     {
+        if (!Auth::user()->hasPermissionTo('stok-pergerakan-list')) {
+            abort(403, 'AKSES DITOLAK: Anda tidak memiliki izin untuk melihat riwayat pergerakan stok.');
+        }
         $validatedData = $request->validate([
             'barang_id' => 'required|exists:barangs,id',
             'kuantitas' => 'required|integer|min:1',
@@ -56,6 +62,9 @@ class StockMovementController extends Controller
     // Method index akan kita buat berikutnya
     public function index(Request $request) // Tambahkan Request $request
     {
+        if (!Auth::user()->hasPermissionTo('stok-pergerakan-list')) {
+            abort(403, 'AKSES DITOLAK: Anda tidak memiliki izin untuk melihat riwayat pergerakan stok.');
+        }
         // Ambil semua input filter dari request
         $filterBarangId = $request->input('barang_id');
         $filterTipePergerakan = $request->input('tipe_pergerakan');
@@ -102,12 +111,18 @@ class StockMovementController extends Controller
 
     public function createKeluar()
     {
+        if (!Auth::user()->hasPermissionTo('stok-pergerakan-list')) {
+            abort(403, 'AKSES DITOLAK: Anda tidak memiliki izin untuk melihat riwayat pergerakan stok.');
+        }
         $barangs = Barang::orderBy('nama_barang', 'asc')->get(); // Ambil semua barang untuk dipilih
         return view('stok.create_keluar', compact('barangs'));
     }
 
     public function storeKeluar(Request $request)
     {
+        if (!Auth::user()->hasPermissionTo('stok-pergerakan-list')) {
+            abort(403, 'AKSES DITOLAK: Anda tidak memiliki izin untuk melihat riwayat pergerakan stok.');
+        }
         $validatedData = $request->validate([
             'barang_id' => 'required|exists:barangs,id',
             'kuantitas' => 'required|integer|min:1',
