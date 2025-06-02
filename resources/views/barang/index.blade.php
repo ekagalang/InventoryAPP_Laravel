@@ -5,7 +5,9 @@
 @section('content') {{-- Memulai section konten --}}
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h1>Daftar Barang</h1>
-    <a href="{{ route('barang.create') }}" class="btn btn-primary">Tambah Barang Baru</a>
+    @can('barang-create')
+        <a href="{{ route('barang.create') }}" class="btn btn-primary">Tambah Barang Baru</a>
+    @endcan
 </div>
 
 @if (session('success'))
@@ -52,14 +54,20 @@
                                 <span class="badge bg-secondary text-capitalize">{{ $barang->status }}</span>
                             @endif
                         </td>
-                        <td class="text-center align-middle"> {{-- Kolom Aksi --}}
-                            <a href="{{ route('barang.show', $barang->id) }}" class="btn btn-info btn-sm" title="Detail"><i class="bi bi-eye"></i></a>
-                            <a href="{{ route('barang.edit', $barang->id) }}" class="btn btn-warning btn-sm" title="Edit"><i class="bi bi-pencil-square"></i></a>
-                            <form action="{{ route('barang.destroy', $barang->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus barang ini?');">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn btn-danger btn-sm" title="Hapus"><i class="bi bi-trash"></i></button>
-                            </form>
+                        <td>
+                            @can('barang-show')
+                                <a href="{{ route('barang.show', $barang->id) }}" class="btn btn-info btn-sm" title="Detail"><i class="bi bi-eye"></i> Detail</a>
+                            @endcan
+                            @can('barang-edit')
+                                <a href="{{ route('barang.edit', $barang->id) }}" class="btn btn-warning btn-sm" title="Edit"><i class="bi bi-pencil-square"></i> Edit</a>
+                            @endcan
+                            @can('barang-delete')
+                                <form action="{{ route('barang.destroy', $barang->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus barang ini?');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-danger btn-sm" title="Hapus"><i class="bi bi-trash"></i> Hapus</button>
+                                </form>
+                            @endcan
                         </td>
                     </tr>
                 @empty

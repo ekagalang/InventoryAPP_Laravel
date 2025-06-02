@@ -1,3 +1,22 @@
+@php
+    if (Auth::check()) { // Pastikan hanya berjalan jika user sudah login
+        // Menggunakan dd() akan menghentikan eksekusi dan menampilkan info ini.
+        // HAPUS ATAU KOMENTARI SETELAH SELESAI DEBUGGING.
+        //
+        // Jika Anda ingin tetap melanjutkan render halaman setelah ini,
+        // Anda bisa menggunakan Log::info() atau var_dump() lalu die(),
+        // tapi dd() paling mudah untuk dilihat.
+        //
+        /* dd(
+            'DEBUGGING USER:',
+            'User ID: ' . Auth::id(),
+            'User Name: ' . Auth::user()->name,
+            'Roles: ' . Auth::user()->getRoleNames()->implode(', '),
+            'Permissions: ' . Auth::user()->getAllPermissions()->pluck('name')->implode(', ')
+        ); */
+    }
+@endphp
+
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
@@ -27,30 +46,53 @@
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">Dashboard</a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('barang.*') ? 'active' : '' }}" href="{{ route('barang.index') }}">Barang</a>
-                        </li>
+                        @can('barang-list') {{-- Hanya tampilkan menu jika punya izin lihat daftar barang --}}
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->routeIs('barang.*') ? 'active' : '' }}" href="{{ route('barang.index') }}">Barang</a>
+                            </li>
+                        @endcan
+                @hasanyrole('Admin|StafGudang') {{-- Tampil hanya untuk Admin ATAU StafGudang --}}
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle {{ request()->routeIs('kategori.*') || request()->routeIs('unit.*') || request()->routeIs('lokasi.*') ? 'active' : '' }}" href="#" id="navbarDropdownDataMaster" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <a class="nav-link dropdown-toggle {{ 
+                                request()->routeIs('kategori.*') || 
+                                request()->routeIs('unit.*') || 
+                                request()->routeIs('lokasi.*') ? 'active' : '' 
+                            }}" href="#" id="navbarDropdownDataMaster" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 Data Master
                             </a>
                             <ul class="dropdown-menu" aria-labelledby="navbarDropdownDataMaster">
-                                <li><a class="dropdown-item {{ request()->routeIs('kategori.*') ? 'active' : '' }}" href="{{ route('kategori.index') }}">Kategori</a></li>
-                                <li><a class="dropdown-item {{ request()->routeIs('unit.*') ? 'active' : '' }}" href="{{ route('unit.index') }}">Unit</a></li>
-                                <li><a class="dropdown-item {{ request()->routeIs('lokasi.*') ? 'active' : '' }}" href="{{ route('lokasi.index') }}">Lokasi</a></li>
+                                @can('kategori-list')
+                                    <li><a class="dropdown-item {{ request()->routeIs('kategori.*') ? 'active' : '' }}" href="{{ route('kategori.index') }}">Kategori</a></li>
+                                @endcan
+                                @can('unit-list')
+                                    <li><a class="dropdown-item {{ request()->routeIs('unit.*') ? 'active' : '' }}" href="{{ route('unit.index') }}">Unit</a></li>
+                                @endcan
+                                @can('lokasi-list')
+                                    <li><a class="dropdown-item {{ request()->routeIs('lokasi.*') ? 'active' : '' }}" href="{{ route('lokasi.index') }}">Lokasi</a></li>
+                                @endcan
+                                {{-- Tambahkan item master data lain di sini jika ada --}}
                             </ul>
                         </li>
+                    @endhasanyrole 
+                    @role('Admin|StafGudang') {{-- Tampil untuk Admin ATAU StafGudang --}}
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle {{ request()->routeIs('stok.*') ? 'active' : '' }}" href="#" id="navbarDropdownStok" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 Manajemen Stok
                             </a>
                             <ul class="dropdown-menu" aria-labelledby="navbarDropdownStok">
-                                <li><a class="dropdown-item {{ request()->routeIs('stok.masuk.create') ? 'active' : '' }}" href="{{ route('stok.masuk.create') }}">Catat Barang Masuk</a></li>
-                                <li><a class="dropdown-item {{ request()->routeIs('stok.keluar.create') ? 'active' : '' }}" href="{{ route('stok.keluar.create') }}">Catat Barang Keluar</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item {{ request()->routeIs('stok.pergerakan.index') ? 'active' : '' }}" href="{{ route('stok.pergerakan.index') }}">Riwayat Pergerakan</a></li>
+                                @can('stok-masuk-create')
+                                    <li><a class="dropdown-item {{ request()->routeIs('stok.masuk.create') ? 'active' : '' }}" href="{{ route('stok.masuk.create') }}">Catat Barang Masuk</a></li>
+                                @endcan
+                                @can('stok-keluar-create')
+                                    <li><a class="dropdown-item {{ request()->routeIs('stok.keluar.create') ? 'active' : '' }}" href="{{ route('stok.keluar.create') }}">Catat Barang Keluar</a></li>
+                                @endcan
+                                @can('stok-pergerakan-list')
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item {{ request()->routeIs('stok.pergerakan.index') ? 'active' : '' }}" href="{{ route('stok.pergerakan.index') }}">Riwayat Pergerakan</a></li>
+                                @endcan
                             </ul>
                         </li>
+                    @endrole
                     @endauth
                 </ul>
                 <ul class="navbar-nav ms-auto"> {{-- Navigasi otentikasi di kanan --}}

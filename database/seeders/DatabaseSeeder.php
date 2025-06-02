@@ -13,11 +13,13 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        // \App\Models\User::factory(10)->create(); // Anda bisa komentari ini jika tidak butuh user factory bawaan
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        // Panggil RolesAndPermissionsSeeder kita
+        $this->call(RolesAndPermissionsSeeder::class); // TAMBAHKAN BARIS INI
+
+        // Anda bisa memanggil seeder lain di sini jika ada
+        // $this->call(BarangSeeder::class);
+        // $this->call(KategoriSeeder::class);
     }
 }

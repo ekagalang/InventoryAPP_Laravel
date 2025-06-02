@@ -6,7 +6,9 @@
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h1>Detail Barang: <span class="fw-normal">{{ $barang->nama_barang }}</span></h1>
     <div>
-        <a href="{{ route('barang.edit', $barang->id) }}" class="btn btn-warning">Edit Barang</a>
+        @can('barang-edit')
+            <a href="{{ route('barang.edit', $barang->id) }}" class="btn btn-warning">Edit Barang</a>
+        @endcan
         <a href="{{ route('barang.index') }}" class="btn btn-secondary">Kembali ke Daftar</a>
     </div>
 </div>

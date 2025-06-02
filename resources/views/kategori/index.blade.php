@@ -5,7 +5,11 @@
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h1>Daftar Kategori Barang</h1>
-    <a href="{{ route('kategori.create') }}" class="btn btn-primary">Tambah Kategori Baru</a>
+    @can('kategori-create')
+    <div class="mb-3">
+        <a href="{{ route('kategori.create') }}" class="btn btn-primary"><i class="bi bi-plus-circle"></i> Tambah Kategori Baru</a>
+    </div>
+    @endcan
 </div>
 
 @if (session('success'))
@@ -42,13 +46,16 @@
                         <td>{{ Str::limit($kategori->deskripsi_kategori, 50, '...') ?? '-' }}</td>
                         <td>{{ $kategori->barangs_count ?? $kategori->barangs->count() }}</td> {{-- Menampilkan jumlah barang terkait --}}
                         <td>
-                            {{-- <a href="{{ route('kategori.show', $kategori->id) }}" class="btn btn-info btn-sm" title="Detail"><i class="bi bi-eye"></i> Detail</a> --}}
-                            <a href="{{ route('kategori.edit', $kategori->id) }}" class="btn btn-warning btn-sm" title="Edit"><i class="bi bi-pencil-square"></i> Edit</a>
-                            <form action="{{ route('kategori.destroy', $kategori->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus kategori ini? Barang yang terkait dengan kategori ini akan diatur ulang (tidak memiliki kategori).');">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn btn-danger btn-sm" title="Hapus"><i class="bi bi-trash"></i> Hapus</button>
-                            </form>
+                            @can('kategori-edit')
+                                <a href="{{ route('kategori.edit', $kategori->id) }}" class="btn btn-warning btn-sm" title="Edit"><i class="bi bi-pencil-square"></i> Edit</a>
+                            @endcan
+                            @can('kategori-delete')
+                                <form action="{{ route('kategori.destroy', $kategori->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus kategori ini?');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-danger btn-sm" title="Hapus"><i class="bi bi-trash"></i> Hapus</button>
+                                </form>
+                            @endcan
                         </td>
                     </tr>
                 @empty

@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Unit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Auth\Access\AuthorizationException;
 
 class UnitController extends Controller
 {
@@ -30,6 +32,10 @@ class UnitController extends Controller
      */
     public function store(Request $request)
     {
+        if (!Auth::user()->hasPermissionTo('barang-create')) {
+            abort(403, 'ANDA TIDAK MEMILIKI IZIN UNTUK MENAMBAH BARANG.');
+        }
+
         $validatedData = $request->validate([
             'nama_unit' => 'required|string|max:255|unique:units,nama_unit',
             'singkatan_unit' => 'nullable|string|max:50|unique:units,singkatan_unit',
@@ -54,6 +60,10 @@ class UnitController extends Controller
      */
     public function edit(Unit $unit)
     {
+        if (!Auth::user()->hasPermissionTo('barang-create')) {
+            abort(403, 'ANDA TIDAK MEMILIKI IZIN UNTUK MENAMBAH BARANG.');
+        }
+
         return view('unit.edit', compact('unit'));
     }
 

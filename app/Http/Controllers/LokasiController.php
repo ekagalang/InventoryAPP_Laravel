@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Lokasi;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Auth\Access\AuthorizationException;
 
 class LokasiController extends Controller
 {
@@ -29,6 +31,10 @@ class LokasiController extends Controller
      */
     public function store(Request $request)
     {
+        if (!Auth::user()->hasPermissionTo('barang-create')) {
+            abort(403, 'ANDA TIDAK MEMILIKI IZIN UNTUK MENAMBAH BARANG.');
+        }
+
         $validatedData = $request->validate([
             'nama_lokasi' => 'required|string|max:255|unique:lokasis,nama_lokasi',
             'kode_lokasi' => 'nullable|string|max:50|unique:lokasis,kode_lokasi',
@@ -53,6 +59,10 @@ class LokasiController extends Controller
      */
     public function edit(Lokasi $lokasi) // Route Model Binding
     {
+        if (!Auth::user()->hasPermissionTo('barang-create')) {
+            abort(403, 'ANDA TIDAK MEMILIKI IZIN UNTUK MENAMBAH BARANG.');
+        }
+
         return view('lokasi.edit', compact('lokasi'));
     }
 

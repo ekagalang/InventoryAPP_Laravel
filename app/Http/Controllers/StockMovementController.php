@@ -6,6 +6,7 @@ use App\Models\Barang; // Import model Barang
 use App\Models\StockMovement; // Import model StockMovement
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth; // Untuk mendapatkan user yang login
+use Illuminate\Auth\Access\AuthorizationException;
 
 class StockMovementController extends Controller
 {

@@ -1,5 +1,33 @@
 <?php
 
+// app()->booted(function () {
+//     if (request()->is('barang')) { // Hanya dd jika mengakses route /barang untuk membatasi efeknya
+//         dd(config('permission.models.permission'));
+//     }
+// });
+
+// app()->booted(function () {
+//     if (request()->is('barang')) { // Hanya dd jika mengakses route /barang
+//         try {
+//             $permissionInstance = resolve(Spatie\Permission\Contracts\Permission::class);
+//             dd("Berhasil me-resolve PermissionContract. Instance:", $permissionInstance, "Config value:", config('permission.models.permission'));
+//         } catch (\Exception $e) {
+//             dd("Gagal me-resolve PermissionContract. Error:", $e->getMessage(), "Config value:", config('permission.models.permission'));
+//         }
+//     }
+// });
+
+// app()->booted(function () {
+//     if (request()->is('barang')) { // Hanya dd jika mengakses route /barang
+//         try {
+//             $permissionModel = new \Spatie\Permission\Models\Permission(); // Coba buat instance langsung
+//             dd("Berhasil membuat instance Spatie\Permission\Models\Permission secara langsung.", $permissionModel);
+//         } catch (\Throwable $e) { // Menangkap semua jenis error/exception
+//             dd("GAGAL membuat instance Spatie\Permission\Models\Permission secara langsung. Error:", $e->getMessage(), $e);
+//         }
+//     }
+// });
+
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\ProfileController;
