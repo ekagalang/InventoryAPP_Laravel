@@ -9,6 +9,10 @@ use App\Http\Controllers\UnitController;
 use App\Http\Controllers\LokasiController;
 use App\Http\Controllers\StockMovementController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\ItemRequestController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\LaporanController;
+use App\Http\Controllers\Admin\RoleController;
 
 /*
 |--------------------------------------------------------------------------
@@ -25,9 +29,9 @@ Route::get('/', function () {
 })->name('home');
 
 // Dashboard bawaan Breeze (sudah otomatis dilindungi auth dari definisinya di auth.php atau di sini)
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('/dashboard', [DashboardController::class, 'index'])
+     ->middleware(['auth', 'verified'])
+     ->name('dashboard');
 
 
 // Grup route yang memerlukan otentikasi
@@ -55,7 +59,29 @@ Route::middleware(['auth', 'verified'])->group(function () { // Menggunakan 'aut
     // Kita bisa grouping dengan prefix 'admin' agar lebih rapi URL-nya
     Route::prefix('admin')->name('admin.')->group(function () {
         Route::resource('users', UserController::class);
+        Route::resource('roles', RoleController::class);
         // Anda bisa tambahkan route lain khusus admin di sini
+        // === ROUTE UNTUK MANAJEMEN PENGAJUAN BARANG OLEH ADMIN/STAF ===
+        Route::get('/pengajuan-barang', [ItemRequestController::class, 'adminIndex'])->name('pengajuan.barang.index'); // Daftar semua pengajuan
+        Route::get('/pengajuan-barang/{itemRequest}', [ItemRequestController::class, 'adminShow'])->name('pengajuan.barang.show'); // Detail pengajuan
+        Route::post('/pengajuan-barang/{itemRequest}/approve', [ItemRequestController::class, 'approve'])->name('pengajuan.barang.approve'); // Aksi setujui
+        Route::post('/pengajuan-barang/{itemRequest}/reject', [ItemRequestController::class, 'reject'])->name('pengajuan.barang.reject');   // Aksi tolak
+        Route::post('/pengajuan-barang/{itemRequest}/process', [ItemRequestController::class, 'process'])->name('pengajuan.barang.process');
+    });
+
+    // === ROUTE UNTUK PENGAJUAN BARANG OLEH PENGGUNA ===
+    Route::get('/pengajuan-barang', [ItemRequestController::class, 'myRequests'])->name('pengajuan.barang.index'); // Daftar pengajuan milik pengguna
+    Route::get('/pengajuan-barang/create', [ItemRequestController::class, 'create'])->name('pengajuan.barang.create'); // Form buat pengajuan
+    Route::post('/pengajuan-barang', [ItemRequestController::class, 'store'])->name('pengajuan.barang.store');     // Simpan pengajuan baru
+    // Nanti kita bisa tambahkan route untuk show detail pengajuan, cancel, dll.
+    // Route::get('/pengajuan-barang/{itemRequest}', [ItemRequestController::class, 'show'])->name('pengajuan.barang.show');
+    // Route::put('/pengajuan-barang/{itemRequest}/cancel', [ItemRequestController::class, 'cancel'])->name('pengajuan.barang.cancel');
+
+    // === ROUTE UNTUK LAPORAN ===
+    Route::prefix('laporan')->name('laporan.')->group(function () {
+        Route::get('/stok-barang', [LaporanController::class, 'stokBarang'])->name('stok.barang');
+        Route::get('/barang-masuk', [LaporanController::class, 'barangMasuk'])->name('barang.masuk');
+        Route::get('/barang-keluar', [LaporanController::class, 'barangKeluar'])->name('barang.keluar');
     });
 
     // Anda bisa menambahkan route lain yang memerlukan login di sini

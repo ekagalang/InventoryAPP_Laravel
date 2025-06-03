@@ -54,4 +54,28 @@ class User extends Authenticatable
     {
         return $this->hasMany(StockMovement::class);
     }
+
+    /**
+     * Seorang User bisa membuat banyak Pengajuan Barang.
+     */
+    public function itemRequestsDiajukan(): HasMany
+    {
+        return $this->hasMany(ItemRequest::class, 'user_id');
+    }
+
+    /**
+     * Seorang User bisa menyetujui/menolak banyak Pengajuan Barang.
+     */
+    public function itemRequestsDisetujui(): HasMany
+    {
+        return $this->hasMany(ItemRequest::class, 'approved_by');
+    }
+
+    /**
+     * Seorang User bisa memproses banyak Pengajuan Barang.
+     */
+    public function itemRequestsDiproses(): HasMany
+    {
+        return $this->hasMany(ItemRequest::class, 'processed_by');
+    }
 }

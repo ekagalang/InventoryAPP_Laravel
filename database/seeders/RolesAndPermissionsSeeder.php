@@ -35,6 +35,30 @@ class RolesAndPermissionsSeeder extends Seeder
             'user-list', 'user-create', 'user-edit', 'user-delete',
             // Manajemen Role & Permission (Nanti, hanya untuk super admin)
             'role-permission-manage',
+
+            // Pengajuan Barang
+            'pengajuan-barang-list-own',    // Melihat daftar pengajuan milik sendiri
+            'pengajuan-barang-create',      // Membuat pengajuan barang baru
+            'pengajuan-barang-cancel-own',  // Membatalkan pengajuan milik sendiri (jika belum diproses)
+
+            'pengajuan-barang-list-all',    // Melihat semua pengajuan barang (untuk Admin/Approver)
+            'pengajuan-barang-approve',     // Menyetujui/Menolak pengajuan barang
+            'pengajuan-barang-process',     // Memproses pengajuan yang sudah disetujui (mengeluarkan barang)
+
+            // Dashboard & Laporan
+            'view-dashboard',           // TAMBAHKAN INI
+            // Nanti kita tambahkan untuk laporan spesifik
+            // 'view-laporan-stok',
+            // 'view-laporan-barang-masuk',
+            // 'view-laporan-barang-keluar',
+
+            // Laporan
+            'view-laporan-stok',           // TAMBAHKAN INI
+            // 'view-laporan-barang-masuk',
+            // 'view-laporan-barang-keluar',
+
+            'view-laporan-barang-masuk',   // TAMBAHKAN INI
+            'view-laporan-barang-keluar',
         ];
 
         foreach ($permissions as $permission) {
@@ -55,6 +79,20 @@ class RolesAndPermissionsSeeder extends Seeder
             'unit-list', 'unit-create',       // Staf gudang bisa kelola unit
             'lokasi-list', 'lokasi-create',     // Staf gudang bisa kelola lokasi
             'stok-pergerakan-list', 'stok-masuk-create', 'stok-keluar-create', // Staf gudang bisa kelola stok
+
+            // ... permission staf gudang yang sudah ada ...
+            'pengajuan-barang-list-own',
+            'pengajuan-barang-create',
+            'pengajuan-barang-cancel-own',
+            'pengajuan-barang-list-all',    // Staf gudang juga bisa lihat semua pengajuan
+            'pengajuan-barang-approve',     // Staf gudang bisa approve
+            'pengajuan-barang-process',     // Staf gudang bisa proses
+
+            // ... permission StafGudang yang sudah ada ...
+            'view-dashboard', // TAMBAHKAN INI
+            'view-laporan-stok', // TAMBAHKAN INI
+            'view-laporan-barang-masuk', // TAMBAHKAN INI
+            'view-laporan-barang-keluar', // TAMBAHKAN INI
         ]);
         $this->command->info('StafGudang role created and given specific permissions.');
         
@@ -66,6 +104,14 @@ class RolesAndPermissionsSeeder extends Seeder
             'unit-list',
             'lokasi-list',
             'stok-pergerakan-list',
+
+            // ... permission viewer yang sudah ada ...
+            'pengajuan-barang-list-own',
+            'pengajuan-barang-create',
+            'pengajuan-barang-cancel-own',
+
+            // ... permission StafGudang yang sudah ada ...
+            'view-dashboard', // TAMBAHKAN INI
         ]);
         $this->command->info('Viewer role created and given view permissions.');
 

@@ -73,14 +73,57 @@
                                 @can('stok-pergerakan-list')
                                     <li><a class="dropdown-item {{ request()->routeIs('stok.pergerakan.index') ? 'active' : '' }}" href="{{ route('stok.pergerakan.index') }}">Riwayat Pergerakan</a></li>
                                 @endcan
+                                @can('pengajuan-barang-list-all')
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item {{ request()->routeIs('admin.pengajuan.barang.index') || request()->routeIs('admin.pengajuan.barang.show') ? 'active' : '' }}" href="{{ route('admin.pengajuan.barang.index') }}">Kelola Pengajuan Barang</a></li>
+                                @endcan
                             </ul>
                         </li>
                     @endcanany
-                        @can('user-list') {{-- Atau @role('Admin') --}}
+                        @canany(['user-list', 'role-permission-manage'])
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle {{ request()->routeIs('admin.users.*') || request()->routeIs('admin.roles.*') ? 'active' : '' }}" href="#" id="navbarDropdownAdminSettings" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                Pengaturan Admin
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="navbarDropdownAdminSettings">
+                                @can('user-list')
+                                <li><a class="dropdown-item {{ request()->routeIs('admin.users.*') ? 'active' : '' }}" href="{{ route('admin.users.index') }}">Manajemen User</a></li>
+                                @endcan
+                                @can('role-permission-manage')
+                                <li><a class="dropdown-item {{ request()->routeIs('admin.roles.*') ? 'active' : '' }}" href="{{ route('admin.roles.index') }}">Manajemen Peran</a></li>
+                                @endcan
+                            </ul>
+                        </li>
+                        @endcanany
+                        @can('pengajuan-barang-create')
                             <li class="nav-item">
-                                <a class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}" href="{{ route('admin.users.index') }}">Manajemen User</a>
+                                <a class="nav-link {{ request()->routeIs('pengajuan.barang.create') ? 'active' : '' }}" href="{{ route('pengajuan.barang.create') }}">Buat Pengajuan Barang</a>
                             </li>
                         @endcan
+                        @can('pengajuan-barang-list-own') {{-- Nanti untuk daftar pengajuan sendiri --}}
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->routeIs('pengajuan.barang.index') ? 'active' : '' }}" href="{{ route('pengajuan.barang.index') }}">Pengajuan Saya</a>
+                            </li>
+                        @endcan
+                        @canany(['view-laporan-stok' /*, 'view-laporan-lainnya' */])
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle {{ request()->is('laporan/*') ? 'active' : '' }}" href="#" id="navbarDropdownLaporan" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                Laporan
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="navbarDropdownLaporan">
+                                @can('view-laporan-stok')
+                                <li><a class="dropdown-item {{ request()->routeIs('laporan.stok.barang') ? 'active' : '' }}" href="{{ route('laporan.stok.barang') }}">Laporan Stok Barang</a></li>
+                                @endcan
+                                @can('view-laporan-barang-masuk')
+                                <li><a class="dropdown-item {{ request()->routeIs('laporan.barang.masuk') ? 'active' : '' }}" href="{{ route('laporan.barang.masuk') }}">Laporan Barang Masuk</a></li>
+                                @endcan
+                                @can('view-laporan-barang-keluar')
+                                <li><a class="dropdown-item {{ request()->routeIs('laporan.barang.keluar') ? 'active' : '' }}" href="{{ route('laporan.barang.keluar') }}">Laporan Barang Keluar</a></li>
+                                @endcan
+                                {{-- Nanti tambahkan link laporan lain di sini --}}
+                            </ul>
+                        </li>
+                        @endcanany
                     @endauth
                 </ul>
                 <ul class="navbar-nav ms-auto"> {{-- Navigasi otentikasi di kanan --}}

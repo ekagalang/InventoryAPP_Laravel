@@ -47,5 +47,10 @@ class Barang extends Model
         return $this->hasMany(StockMovement::class);
     }
 
+    public function itemRequests(): HasMany
+    {
+        return $this->hasMany(ItemRequest::class, 'barang_id');
+    }
+
     // Relasi akan ditambahkan di sini nanti
 }

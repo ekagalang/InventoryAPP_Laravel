@@ -5,11 +5,11 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller; // Import base Controller
 use App\Models\User; // Import model User
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Spatie\Permission\Models\Role;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Illuminate\Validation\Rule;
-use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
@@ -137,29 +137,29 @@ public function __construct()
                 'string', 
                 'email', 
                 'max:255', 
-                Rule::unique('users')->ignore($user->id), // Email harus unik, kecuali untuk user ini sendiri
+                Rule::unique('users')->ignore($user->id), // Email unik, abaikan user saat ini
             ],
-            'password' => ['nullable', 'confirmed', Rules\Password::defaults()], // Password opsional
-            'roles' => ['required', 'array'],
-            'roles.*' => ['string', 'exists:roles,name'],
+            'password' => ['nullable', 'confirmed', Rules\Password::defaults()], // Password opsional, jika diisi harus ada konfirmasi
+            'roles' => ['required', 'array'], // Roles wajib dan harus array
+            'roles.*' => ['string', 'exists:roles,name'], // Setiap role harus ada di tabel roles
         ]);
 
         // Update data dasar pengguna
         $user->name = $validatedData['name'];
         $user->email = $validatedData['email'];
 
-        // Update password hanya jika diisi
+        // Update password hanya jika field password baru diisi
         if (!empty($validatedData['password'])) {
             $user->password = Hash::make($validatedData['password']);
         }
 
-        $user->save(); // Simpan perubahan pada user
+        $user->save(); // Simpan perubahan pada user (nama, email, password jika diubah)
 
         // Sinkronkan peran pengguna
-        // syncRoles akan menghapus peran lama dan menerapkan peran baru yang dipilih
+        // syncRoles akan menghapus semua peran lama user dan menerapkan peran baru yang ada di array $validatedData['roles']
         $user->syncRoles($validatedData['roles']);
 
-        return redirect()->route('admin.users.index')->with('success', 'Data pengguna berhasil diperbarui!');
+        return redirect()->route('admin.users.index')->with('success', 'Data pengguna "' . $user->name . '" berhasil diperbarui!');
     }
 
     /**
