@@ -67,6 +67,9 @@
                                 @can('stok-keluar-create')
                                     <li><a class="dropdown-item {{ request()->routeIs('stok.keluar.create') ? 'active' : '' }}" href="{{ route('stok.keluar.create') }}">Catat Barang Keluar</a></li>
                                 @endcan
+                                @can('stok-koreksi')
+                                    <li><a class="dropdown-item {{ request()->routeIs('stok.koreksi.create') ? 'active' : '' }}" href="{{ route('stok.koreksi.create') }}">Koreksi Stok</a></li>
+                                @endcan
                                 @if(Auth::user()->hasPermissionTo('stok-masuk-create') && Auth::user()->hasPermissionTo('stok-keluar-create') && Auth::user()->hasPermissionTo('stok-pergerakan-list'))
                                     <li><hr class="dropdown-divider"></li>
                                 @endif

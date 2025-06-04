@@ -29,6 +29,7 @@
                     <th class="text-center align-middle">Lokasi</th>
                     <th class="text-center align-middle">Kode</th>
                     <th class="text-center align-middle">Stok</th>
+                    <th class="text-center align-middle">Stok Min.</th>
                     <th class="text-center align-middle">Status</th>
                     <th class="text-center align-middle">Aksi</th>
                 </tr>
@@ -37,12 +38,13 @@
                 @forelse ($barangs as $key => $barang)
                     <tr>
                         <td class="text-center align-middle">{{ $barangs->firstItem() + $key }}</td>
-                        <td class="align-middle">{{ $barang->nama_barang }}</td> {{-- Biarkan nama barang rata kiri --}}
-                        <td class="align-middle">{{ $barang->kategori->nama_kategori ?? '-' }}</td>
-                        <td class="align-middle">{{ $barang->unit->singkatan_unit ?? ($barang->unit->nama_unit ?? '-') }}</td>
-                        <td class="align-middle">{{ $barang->lokasi->nama_lokasi ?? '-' }}</td>
+                        <td class="text-center align-middle">{{ $barang->nama_barang }}</td> {{-- Biarkan nama barang rata kiri --}}
+                        <td class="text-center align-middle">{{ $barang->kategori->nama_kategori ?? '-' }}</td>
+                        <td class="text-center align-middle">{{ $barang->unit->singkatan_unit ?? ($barang->unit->nama_unit ?? '-') }}</td>
+                        <td class="text-center align-middle">{{ $barang->lokasi->nama_lokasi ?? '-' }}</td>
                         <td class="text-center align-middle">{{ $barang->kode_barang ?? '-' }}</td>
                         <td class="text-center align-middle">{{ $barang->stok }}</td>
+                        <td class="text-center align-middle">{{ number_format($barang->stok_minimum, 0, ',', '.') }}</td>
                         <td class="text-center align-middle">
                             @if ($barang->status == 'aktif')
                                 <span class="badge bg-success text-capitalize">{{ $barang->status }}</span>

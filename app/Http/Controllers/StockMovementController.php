@@ -6,6 +6,7 @@ use App\Models\Barang; // Import model Barang
 use App\Models\StockMovement; // Import model StockMovement
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth; // Untuk mendapatkan user yang login
+use Illuminate\Support\Facades\DB;
 use Illuminate\Auth\Access\AuthorizationException;
 
 class StockMovementController extends Controller
@@ -151,6 +152,79 @@ class StockMovementController extends Controller
 
         return redirect()->route('stok.pergerakan.index')
                         ->with('success', 'Barang keluar berhasil dicatat!');
+    }
+
+    public function createAdjustment()
+    {
+        if (!Auth::user()->hasPermissionTo('stok-koreksi')) {
+            abort(403, 'AKSES DITOLAK: Anda tidak memiliki izin untuk melakukan koreksi stok.');
+        }
+
+        // Ambil semua barang untuk dipilih, beserta informasi stok saat ini
+        $barangs = Barang::orderBy('nama_barang', 'asc')->get()->map(function ($barang) {
+            $barang->info_display = $barang->nama_barang . ' (Stok Sistem: ' . $barang->stok . ' ' . ($barang->unit->singkatan_unit ?? $barang->unit->nama_unit ?? '') . ')';
+            return $barang;
+        });
+
+        return view('stok.create_adjustment', compact('barangs'));
+    }
+
+    /**
+     * Menyimpan data koreksi stok.
+     */
+    public function storeAdjustment(Request $request)
+    {
+        if (!Auth::user()->hasPermissionTo('stok-koreksi')) {
+            abort(403, 'AKSES DITOLAK: Anda tidak memiliki izin untuk menyimpan koreksi stok.');
+        }
+
+        $validatedData = $request->validate([
+            'barang_id' => 'required|exists:barangs,id',
+            'stok_fisik_baru' => 'required|integer|min:0', // Stok fisik tidak boleh negatif
+            'alasan_koreksi' => 'required|string|max:1000',
+            'tanggal_koreksi' => 'required|date|before_or_equal:today', // Tanggal koreksi, tidak boleh di masa depan
+        ]);
+
+        $barang = Barang::findOrFail($validatedData['barang_id']);
+        $stokSistemSebelumnya = $barang->stok;
+        $stokFisikBaru = (int)$validatedData['stok_fisik_baru'];
+
+        $kuantitasDisesuaikan = $stokFisikBaru - $stokSistemSebelumnya;
+        $tipePergerakanKoreksi = '';
+
+        if ($kuantitasDisesuaikan == 0) {
+            return redirect()->route('stok.koreksi.create')->with('info', 'Tidak ada perubahan stok. Stok fisik sama dengan stok sistem.');
+        } elseif ($kuantitasDisesuaikan > 0) {
+            $tipePergerakanKoreksi = 'koreksi-tambah';
+        } else { // $kuantitasDisesuaikan < 0
+            $tipePergerakanKoreksi = 'koreksi-kurang';
+            $kuantitasDisesuaikan = abs($kuantitasDisesuaikan); // Kuantitas di StockMovement selalu positif
+        }
+
+        DB::beginTransaction();
+        try {
+            StockMovement::create([
+                'barang_id' => $barang->id,
+                'user_id' => Auth::id(),
+                'tipe_pergerakan' => $tipePergerakanKoreksi,
+                'kuantitas' => $kuantitasDisesuaikan,
+                // 'stok_sebelumnya' akan diisi oleh observer dengan $stokSistemSebelumnya
+                // 'stok_setelahnya' akan diisi oleh observer dengan $stokFisikBaru
+                'tanggal_pergerakan' => $validatedData['tanggal_koreksi'] . ' ' . now()->format('H:i:s'), // Gabungkan tanggal dari input dengan waktu saat ini
+                'catatan' => 'Koreksi Stok/Stok Opname. Alasan: ' . $validatedData['alasan_koreksi'],
+            ]);
+            // StockMovementObserver akan otomatis mengupdate $barang->stok menjadi $stokFisikBaru
+
+            DB::commit();
+
+            return redirect()->route('stok.pergerakan.index')
+                             ->with('success', 'Koreksi stok untuk barang "'.$barang->nama_barang.'" berhasil disimpan. Stok baru: ' . $stokFisikBaru);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()
+                             ->with('error', 'Gagal menyimpan koreksi stok: ' . $e->getMessage())
+                             ->withInput();
+        }
     }
 
     // Method lain akan ditambahkan nanti

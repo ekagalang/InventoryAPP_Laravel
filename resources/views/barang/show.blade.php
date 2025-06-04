@@ -54,6 +54,10 @@
                             <td>{{ $barang->stok }}</td>
                         </tr>
                         <tr>
+                            <th>Stok Minimum</th>
+                            <td>: {{ number_format($barang->stok_minimum, 0, ',', '.') }}</td>
+                        </tr>
+                        <tr>
                             <th>Harga Beli</th>
                             <td>Rp {{ number_format($barang->harga_beli ?? 0, 0, ',', '.') }}</td>
                         </tr>

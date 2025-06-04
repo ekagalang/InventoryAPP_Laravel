@@ -18,6 +18,7 @@ class Barang extends Model
         'unit_id',
         'lokasi_id',
         'stok',
+        'stok_minimum',
         'harga_beli',
         'gambar',
         'status',

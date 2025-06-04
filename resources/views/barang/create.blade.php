@@ -107,7 +107,23 @@
                                 </div>
                             @enderror
                         </div>
-                        <div class="col-md-6 mb-3">
+                        <div class="row">
+                            <div class="col-md-6 mb-3"> {{-- Stok Awal --}}
+                                <label for="stok" class="form-label">Stok Awal</label>
+                                <input type="number" class="form-control @error('stok') is-invalid @enderror" id="stok" name="stok" value="{{ old('stok', 0) }}" min="0">
+                                @error('stok')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            <div class="col-md-6 mb-3"> {{-- Stok Minimum --}}
+                                <label for="stok_minimum" class="form-label">Stok Minimum (Untuk Notifikasi)</label>
+                                <input type="number" class="form-control @error('stok_minimum') is-invalid @enderror" id="stok_minimum" name="stok_minimum" value="{{ old('stok_minimum', 0) }}" min="0">
+                                @error('stok_minimum')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                            <div class="col-md-6 mb-3">
                             <label for="harga_beli" class="form-label">Harga Beli (Opsional)</label>
                             <input type="number" step="0.01" class="form-control @error('harga_beli') is-invalid @enderror" id="harga_beli" name="harga_beli" value="{{ old('harga_beli') }}" min="0">
                             @error('harga_beli')

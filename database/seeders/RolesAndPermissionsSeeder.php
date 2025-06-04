@@ -59,6 +59,7 @@ class RolesAndPermissionsSeeder extends Seeder
 
             'view-laporan-barang-masuk',   // TAMBAHKAN INI
             'view-laporan-barang-keluar',
+            'stok-koreksi',
         ];
 
         foreach ($permissions as $permission) {
@@ -93,6 +94,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'view-laporan-stok', // TAMBAHKAN INI
             'view-laporan-barang-masuk', // TAMBAHKAN INI
             'view-laporan-barang-keluar', // TAMBAHKAN INI
+            'stok-koreksi',
         ]);
         $this->command->info('StafGudang role created and given specific permissions.');
         

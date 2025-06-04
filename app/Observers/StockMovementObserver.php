@@ -4,7 +4,11 @@ namespace App\Observers;
 
 use App\Models\StockMovement;
 use App\Models\Barang;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use App\Notifications\LowStockNotification; // TAMBAHKAN INI
+use App\Models\User;                        // TAMBAHKAN INI
+use Illuminate\Support\Facades\Notification; // TAMBAHKAN INI
 
 class StockMovementObserver
 {
@@ -13,44 +17,49 @@ class StockMovementObserver
      */
     public function created(StockMovement $stockMovement): void
     {
-        $barang = $stockMovement->barang; // Mengambil instance Barang yang berelasi
+        $barang = $stockMovement->barang;
 
         if ($barang) {
-            // 1. Ambil stok barang SAAT INI (sebelum diubah oleh pergerakan ini)
-            // Nilai ini akan menjadi 'stok_sebelumnya' yang sebenarnya untuk pergerakan ini.
             $stokBarangSebelumPergerakanIni = $barang->stok;
 
-            // 2. Update stok barang berdasarkan tipe pergerakan
-            if ($stockMovement->tipe_pergerakan == 'masuk') {
+            if ($stockMovement->tipe_pergerakan == 'masuk' || $stockMovement->tipe_pergerakan == 'koreksi-tambah') {
                 $barang->stok += $stockMovement->kuantitas;
-            } elseif ($stockMovement->tipe_pergerakan == 'keluar') {
-                // Pertimbangan untuk validasi stok cukup bisa ditambahkan di controller sebelum menyimpan StockMovement,
-                // atau di sini jika ada aturan bisnis yang ketat (misalnya, tidak boleh negatif).
-                // Untuk sekarang, kita biarkan bisa mengurangi.
+            } elseif ($stockMovement->tipe_pergerakan == 'keluar' || $stockMovement->tipe_pergerakan == 'koreksi-kurang') {
                 $barang->stok -= $stockMovement->kuantitas;
             }
+            $barang->save(); // Simpan perubahan stok barang
 
-            // 3. Simpan perubahan stok pada model Barang
-            $barang->save();
-
-            // 4. Update record StockMovement yang baru saja dibuat dengan nilai stok_sebelumnya dan stok_setelahnya
-            // Kita menggunakan saveQuietly() agar tidak memicu event observer lagi (menghindari infinite loop).
+            // Update stok_sebelumnya dan stok_setelahnya di StockMovement
             $stockMovement->stok_sebelumnya = $stokBarangSebelumPergerakanIni;
-            $stockMovement->stok_setelahnya = $barang->stok; // Stok barang yang baru setelah diupdate
-            
-            // Bungkus dalam DB::transaction jika ingin memastikan keduanya (update barang & stockMovement) berhasil atau gagal bersamaan.
-            // Namun, untuk kasus ini, jika $barang->save() gagal, kode di bawahnya tidak akan tereksekusi.
-            // Jika $stockMovement->saveQuietly() gagal setelah $barang->save() berhasil, akan ada sedikit inkonsistensi
-            // pada kolom stok_sebelumnya/stok_setelahnya di stock_movements, tapi stok barang utama tetap akurat.
-            // DB::transaction(function () use ($stockMovement, $barang, $stokBarangSebelumPergerakanIni) {
-            //     $barang->save(); // Pindahkan $barang->save() ke dalam transaksi jika menggunakannya
-            //     $stockMovement->stok_sebelumnya = $stokBarangSebelumPergerakanIni;
-            //     $stockMovement->stok_setelahnya = $barang->stok;
-            //     $stockMovement->saveQuietly();
-            // });
+            $stockMovement->stok_setelahnya = $barang->stok;
             $stockMovement->saveQuietly();
+
+            // === PENGECEKAN STOK MINIMUM ===
+            // Hanya cek jika ini adalah transaksi keluar atau koreksi kurang,
+            // dan jika barang tersebut memiliki pengaturan stok_minimum > 0
+            if (($stockMovement->tipe_pergerakan == 'keluar' || $stockMovement->tipe_pergerakan == 'koreksi-kurang') &&
+                $barang->stok_minimum > 0 && 
+                $barang->stok <= $barang->stok_minimum) 
+            {
+                Log::info('STOK MINIMUM TERCAPAI untuk barang: ' . $barang->nama_barang . '. Notifikasi akan dikirim.'); // Biarkan Log untuk debugging awal
+
+                // Ambil user yang akan dinotifikasi (misalnya Admin dan StafGudang)
+                $usersToNotify = User::role(['Admin', 'StafGudang'])->get(); 
+
+                if ($usersToNotify->isNotEmpty()) {
+                    Notification::send($usersToNotify, new LowStockNotification($barang));
+                    Log::info('Notifikasi LowStockNotification dikirim ke ' . $usersToNotify->count() . ' pengguna.');
+                } else {
+                    Log::warning('Tidak ada user Admin atau StafGudang yang ditemukan untuk dikirimi notifikasi stok minimum.');
+                }
+            }
+
+                $usersToNotify = User::role(['Admin', 'StafGudang'])->get(); // Contoh mengambil user Admin & StafGudang
+                if ($usersToNotify->isNotEmpty()) {
+                    \Illuminate\Support\Facades\Notification::send($usersToNotify, new LowStockNotification($barang));
+                }
+            }
         }
-    }
 
     /**
      * Handle the StockMovement "updated" event.

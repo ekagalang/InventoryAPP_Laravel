@@ -55,6 +55,10 @@ Route::middleware(['auth', 'verified'])->group(function () { // Menggunakan 'aut
     Route::get('/stok/keluar/create', [StockMovementController::class, 'createKeluar'])->name('stok.keluar.create');
     Route::post('/stok/keluar', [StockMovementController::class, 'storeKeluar'])->name('stok.keluar.store');
 
+    // TAMBAHKAN ROUTE INI UNTUK KOREKSI STOK:
+    Route::get('/stok/koreksi/create', [StockMovementController::class, 'createAdjustment'])->name('stok.koreksi.create');
+    Route::post('/stok/koreksi', [StockMovementController::class, 'storeAdjustment'])->name('stok.koreksi.store');
+
         // === ROUTE UNTUK MANAJEMEN PENGGUNA OLEH ADMIN ===
     // Kita bisa grouping dengan prefix 'admin' agar lebih rapi URL-nya
     Route::prefix('admin')->name('admin.')->group(function () {
@@ -83,6 +87,10 @@ Route::middleware(['auth', 'verified'])->group(function () { // Menggunakan 'aut
         Route::get('/barang-masuk', [LaporanController::class, 'barangMasuk'])->name('barang.masuk');
         Route::get('/barang-keluar', [LaporanController::class, 'barangKeluar'])->name('barang.keluar');
     });
+
+    Route::get('/notifikasi', [NotificationController::class, 'index'])->name('notifikasi.index');
+    Route::get('/notifikasi/{id}/baca', [NotificationController::class, 'markAsReadAndRedirect'])->name('notifikasi.markAsReadAndRedirect');
+    Route::post('/notifikasi/baca-semua', [NotificationController::class, 'markAllAsRead'])->name('notifikasi.markAllAsRead');
 
     // Anda bisa menambahkan route lain yang memerlukan login di sini
     // Misalnya, nanti untuk manajemen stok, laporan, dll.

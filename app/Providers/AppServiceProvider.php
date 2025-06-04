@@ -3,8 +3,9 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
-use App\Models\StockMovement;
-use App\Observers\StockMovementObserver;
+use Illuminate\Support\Facades\View; // Import View facade
+use Illuminate\Support\Facades\Auth; // Import Auth facade
+// use Illuminate\Pagination\Paginator; 
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -21,6 +22,21 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        StockMovement::observe(StockMovementObserver::class);
+        // Paginator::useBootstrapFive(); 
+
+        // === VIEW COMPOSER UNTUK NOTIFIKASI DI NAVBAR ===
+        View::composer('layouts.app', function ($view) {
+            if (Auth::check()) { 
+                $unreadNotifications = Auth::user()->unreadNotifications()->take(5)->get(); 
+                $unreadNotificationsCount = Auth::user()->unreadNotifications()->count();
+                
+                $view->with('unreadNotifications', $unreadNotifications)
+                     ->with('unreadNotificationsCount', $unreadNotificationsCount);
+            } else {
+                $view->with('unreadNotifications', collect()) 
+                     ->with('unreadNotificationsCount', 0);
+            }
+        });
+        // === AKHIR VIEW COMPOSER ===
     }
 }
