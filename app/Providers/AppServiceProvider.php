@@ -3,9 +3,10 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\View; // Import View facade
-use Illuminate\Support\Facades\Auth; // Import Auth facade
-// use Illuminate\Pagination\Paginator; 
+use Illuminate\Support\Facades\View;
+use Illuminate\Support\Facades\Auth;
+use App\Models\StockMovement;             // <--- PASTIKAN INI ADA
+use App\Observers\StockMovementObserver;  // <--- PASTIKAN INI ADA
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -37,6 +38,8 @@ class AppServiceProvider extends ServiceProvider
                      ->with('unreadNotificationsCount', 0);
             }
         });
+
+        StockMovement::observe(StockMovementObserver::class);
         // === AKHIR VIEW COMPOSER ===
     }
 }

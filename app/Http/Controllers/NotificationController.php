@@ -16,15 +16,18 @@ class NotificationController extends Controller
     /**
      * Menampilkan semua notifikasi pengguna.
      */
-    public function index()
-    {
-        $user = Auth::user();
-        // Ambil semua notifikasi (dibaca & belum dibaca), paginasi
-        $notifications = $user->notifications()->paginate(10); 
-        
-        // Untuk view 'notifikasi.index' yang akan kita buat nanti
-        return view('notifikasi.index', compact('notifications'));
-    }
+public function index()
+{
+    $user = Auth::user();
+    $notifications = $user->notifications()->paginate(15); // Ambil semua, paginasi
+
+    // Opsional: Saat halaman ini dibuka, tandai semua yang belum dibaca sebagai dibaca
+    // $user->unreadNotifications->markAsRead(); 
+    // Jika Anda ingin ini terjadi otomatis saat halaman dibuka, uncomment baris di atas.
+    // Atau, biarkan pengguna menandainya manual melalui tombol.
+
+    return view('notifikasi.index', compact('notifications'));
+}
 
     /**
      * Menandai notifikasi sebagai sudah dibaca dan redirect ke URL tujuan.

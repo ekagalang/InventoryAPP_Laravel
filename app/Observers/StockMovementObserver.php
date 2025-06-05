@@ -4,11 +4,11 @@ namespace App\Observers;
 
 use App\Models\StockMovement;
 use App\Models\Barang;
+use App\Models\User; // Untuk notifikasi
+use App\Notifications\LowStockNotification; // Untuk notifikasi
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Notification; // Untuk notifikasi
 use Illuminate\Support\Facades\DB;
-use App\Notifications\LowStockNotification; // TAMBAHKAN INI
-use App\Models\User;                        // TAMBAHKAN INI
-use Illuminate\Support\Facades\Notification; // TAMBAHKAN INI
 
 class StockMovementObserver
 {
@@ -17,49 +17,58 @@ class StockMovementObserver
      */
     public function created(StockMovement $stockMovement): void
     {
+        Log::info('StockMovementObserver: created event triggered for StockMovement ID: ' . $stockMovement->id); // LOG AWAL
+
         $barang = $stockMovement->barang;
 
-        if ($barang) {
+        if ($barang) { // Kurung kurawal pembuka untuk if ($barang)
+            Log::info('StockMovementObserver: Barang found: ' . $barang->nama_barang . ' (ID: ' . $barang->id . ')');
+            
             $stokBarangSebelumPergerakanIni = $barang->stok;
+            Log::info('StockMovementObserver: Stok barang SEBELUM update: ' . $stokBarangSebelumPergerakanIni);
 
             if ($stockMovement->tipe_pergerakan == 'masuk' || $stockMovement->tipe_pergerakan == 'koreksi-tambah') {
                 $barang->stok += $stockMovement->kuantitas;
+                Log::info('StockMovementObserver: Tipe MASUK/KOREKSI-TAMBAH. Kuantitas: ' . $stockMovement->kuantitas . '. Stok barang akan menjadi: ' . $barang->stok);
             } elseif ($stockMovement->tipe_pergerakan == 'keluar' || $stockMovement->tipe_pergerakan == 'koreksi-kurang') {
                 $barang->stok -= $stockMovement->kuantitas;
+                Log::info('StockMovementObserver: Tipe KELUAR/KOREKSI-KURANG. Kuantitas: ' . $stockMovement->kuantitas . '. Stok barang akan menjadi: ' . $barang->stok);
+            } else {
+                Log::warning('StockMovementObserver: Tipe pergerakan tidak dikenal: ' . $stockMovement->tipe_pergerakan);
             }
+            
             $barang->save(); // Simpan perubahan stok barang
+            Log::info('StockMovementObserver: Stok barang SETELAH update dan disimpan: ' . $barang->fresh()->stok); // Ambil stok terbaru dari DB
 
             // Update stok_sebelumnya dan stok_setelahnya di StockMovement
+            // $stockMovement->stok_sebelumnya diisi dengan nilai stok barang SEBELUM observer ini mengubahnya
+            // $stockMovement->stok_setelahnya diisi dengan nilai stok barang SETELAH observer ini mengubahnya
             $stockMovement->stok_sebelumnya = $stokBarangSebelumPergerakanIni;
-            $stockMovement->stok_setelahnya = $barang->stok;
+            $stockMovement->stok_setelahnya = $barang->stok; // Ini sudah $barang->stok yang terupdate
             $stockMovement->saveQuietly();
+            Log::info('StockMovementObserver: StockMovement record updated with stok_sebelumnya: ' . $stockMovement->stok_sebelumnya . ' dan stok_setelahnya: ' . $stockMovement->stok_setelahnya);
 
-            // === PENGECEKAN STOK MINIMUM ===
-            // Hanya cek jika ini adalah transaksi keluar atau koreksi kurang,
-            // dan jika barang tersebut memiliki pengaturan stok_minimum > 0
+
+            // PENGECEKAN STOK MINIMUM & PENGIRIMAN NOTIFIKASI
             if (($stockMovement->tipe_pergerakan == 'keluar' || $stockMovement->tipe_pergerakan == 'koreksi-kurang') &&
                 $barang->stok_minimum > 0 && 
                 $barang->stok <= $barang->stok_minimum) 
-            {
-                Log::info('STOK MINIMUM TERCAPAI untuk barang: ' . $barang->nama_barang . '. Notifikasi akan dikirim.'); // Biarkan Log untuk debugging awal
-
-                // Ambil user yang akan dinotifikasi (misalnya Admin dan StafGudang)
+            { 
+                Log::info('STOK MINIMUM TERCAPAI untuk: ' . $barang->nama_barang . '. Mengirim notifikasi...');
                 $usersToNotify = User::role(['Admin', 'StafGudang'])->get(); 
-
                 if ($usersToNotify->isNotEmpty()) {
                     Notification::send($usersToNotify, new LowStockNotification($barang));
                     Log::info('Notifikasi LowStockNotification dikirim ke ' . $usersToNotify->count() . ' pengguna.');
                 } else {
-                    Log::warning('Tidak ada user Admin atau StafGudang yang ditemukan untuk dikirimi notifikasi stok minimum.');
+                    Log::warning('Tidak ada user Admin atau StafGudang yang ditemukan untuk notifikasi stok minimum.');
                 }
-            }
-
-                $usersToNotify = User::role(['Admin', 'StafGudang'])->get(); // Contoh mengambil user Admin & StafGudang
-                if ($usersToNotify->isNotEmpty()) {
-                    \Illuminate\Support\Facades\Notification::send($usersToNotify, new LowStockNotification($barang));
-                }
-            }
+            } 
+        
+        } else { // Kurung kurawal penutup untuk if ($barang) 
+            Log::error('StockMovementObserver: Barang tidak ditemukan untuk StockMovement ID: ' . $stockMovement->id);
         }
+
+    }
 
     /**
      * Handle the StockMovement "updated" event.
