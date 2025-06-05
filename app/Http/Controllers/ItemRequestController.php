@@ -280,6 +280,36 @@ class ItemRequestController extends Controller
         }
     }
 
+    public function cancelOwnRequest(ItemRequest $itemRequest) // Menggunakan Route Model Binding
+    {
+        // Pastikan user yang login adalah pemilik pengajuan
+        if ($itemRequest->user_id !== Auth::id()) {
+            abort(403, 'AKSES DITOLAK: Anda bukan pemilik pengajuan ini.');
+        }
+
+        // Pastikan user memiliki permission untuk membatalkan
+        if (!Auth::user()->hasPermissionTo('pengajuan-barang-cancel-own')) {
+            abort(403, 'AKSES DITOLAK: Anda tidak memiliki izin untuk membatalkan pengajuan.');
+        }
+
+        // Hanya pengajuan dengan status 'Diajukan' yang bisa dibatalkan oleh pemohon
+        if ($itemRequest->status !== 'Diajukan') {
+            return redirect()->route('pengajuan.barang.index')
+                             ->with('error', 'Pengajuan ini tidak dapat dibatalkan (Status saat ini: '.$itemRequest->status.').');
+        }
+
+        $itemRequest->status = 'Dibatalkan';
+        // Anda bisa menambahkan kolom untuk user_yang_membatalkan dan tanggal_pembatalan jika perlu
+        // $itemRequest->cancelled_by = Auth::id();
+        // $itemRequest->cancelled_at = now();
+        $itemRequest->save();
+
+        // TODO: Kirim notifikasi ke Admin/Staf bahwa pengajuan dibatalkan (Opsional)
+
+        return redirect()->route('pengajuan.barang.index')
+                         ->with('success', 'Pengajuan barang (ID: '.$itemRequest->id.') berhasil dibatalkan.');
+    }
+
     // Method store akan kita isi nanti
     // Method myRequests juga nanti
 }

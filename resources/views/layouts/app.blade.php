@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>@yield('title', 'Aplikasi Inventaris')</title>
+    <title>@yield('title', config('app.name', 'Aplikasi Inventaris'))</title>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
@@ -15,18 +15,19 @@
 <body class="d-flex flex-column min-vh-100">
 
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
-    <div class="container">
-        <a class="navbar-brand" href="{{ url('/') }}">InventarisApp</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+    <div class="container-fluid"> {{-- container-fluid agar lebih lebar --}}
+        <a class="navbar-brand" href="{{ Auth::check() ? route('dashboard') : url('/') }}">{{ config('app.name', 'InventarisApp') }}</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbarNav" aria-controls="mainNavbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
-
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav">
-                @auth
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">Dashboard</a>
-                    </li>
+        <div class="collapse navbar-collapse" id="mainNavbarNav">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                @auth {{-- Semua menu navigasi utama hanya tampil jika user sudah login --}}
+                    @can('view-dashboard') {{-- Pastikan permission 'view-dashboard' ada dan di-assign --}}
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">Dashboard</a>
+                        </li>
+                    @endcan
 
                     @can('barang-list')
                         <li class="nav-item">
@@ -34,10 +35,14 @@
                         </li>
                     @endcan
 
+                    {{-- Dropdown Data Master --}}
+                    {{-- Tampilkan jika user punya salah satu permission untuk lihat item di dalamnya ATAU peran tertentu --}}
                     @canany(['kategori-list', 'unit-list', 'lokasi-list'])
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle {{ request()->is('kategori*') || request()->is('unit*') || request()->is('lokasi*') ? 'active' : '' }}" href="#" data-bs-toggle="dropdown">Data Master</a>
-                            <ul class="dropdown-menu">
+                            <a class="nav-link dropdown-toggle {{ request()->is('kategori*') || request()->is('unit*') || request()->is('lokasi*') ? 'active' : '' }}" href="#" id="navbarDropdownDataMaster" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                Data Master
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="navbarDropdownDataMaster">
                                 @can('kategori-list')
                                     <li><a class="dropdown-item {{ request()->routeIs('kategori.*') ? 'active' : '' }}" href="{{ route('kategori.index') }}">Kategori</a></li>
                                 @endcan
@@ -51,145 +56,223 @@
                         </li>
                     @endcanany
 
-                    @canany(['stok-masuk-create', 'stok-keluar-create', 'stok-pergerakan-list'])
+                    {{-- Dropdown Manajemen Stok --}}
+                    @canany(['stok-pergerakan-list', 'stok-masuk-create', 'stok-keluar-create', 'stok-koreksi', 'pengajuan-barang-list-all'])
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle {{ request()->routeIs('stok.*') ? 'active' : '' }}" href="#" data-bs-toggle="dropdown">Manajemen Stok</a>
-                            <ul class="dropdown-menu">
+                            <a class="nav-link dropdown-toggle {{ request()->is('stok*') || request()->is('admin/pengajuan-barang*') ? 'active' : '' }}" href="#" id="navbarDropdownStok" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                Manajemen Stok
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="navbarDropdownStok">
                                 @can('stok-masuk-create')
-                                    <li><a class="dropdown-item" href="{{ route('stok.masuk.create') }}">Catat Barang Masuk</a></li>
+                                    <li><a class="dropdown-item {{ request()->routeIs('stok.masuk.create') ? 'active' : '' }}" href="{{ route('stok.masuk.create') }}">Catat Barang Masuk</a></li>
                                 @endcan
                                 @can('stok-keluar-create')
-                                    <li><a class="dropdown-item" href="{{ route('stok.keluar.create') }}">Catat Barang Keluar</a></li>
+                                    <li><a class="dropdown-item {{ request()->routeIs('stok.keluar.create') ? 'active' : '' }}" href="{{ route('stok.keluar.create') }}">Catat Barang Keluar</a></li>
                                 @endcan
                                 @can('stok-koreksi')
-                                    <li><a class="dropdown-item" href="{{ route('stok.koreksi.create') }}">Koreksi Stok</a></li>
+                                    <li><a class="dropdown-item {{ request()->routeIs('stok.koreksi.create') ? 'active' : '' }}" href="{{ route('stok.koreksi.create') }}">Koreksi Stok</a></li>
                                 @endcan
+                                @if(Auth::user()->hasAnyPermission(['stok-masuk-create', 'stok-keluar-create', 'stok-koreksi']) && Auth::user()->hasPermissionTo('stok-pergerakan-list'))
+                                    <li><hr class="dropdown-divider"></li>
+                                @endif
                                 @can('stok-pergerakan-list')
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item" href="{{ route('stok.pergerakan.index') }}">Riwayat Pergerakan</a></li>
+                                    <li><a class="dropdown-item {{ request()->routeIs('stok.pergerakan.index') ? 'active' : '' }}" href="{{ route('stok.pergerakan.index') }}">Riwayat Pergerakan</a></li>
                                 @endcan
-                                @can('pengajuan-barang-list-all')
+                                @can('pengajuan-barang-list-all') {{-- Pindahkan Kelola Pengajuan ke sini jika lebih logis --}}
                                     <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item" href="{{ route('admin.pengajuan.barang.index') }}">Kelola Pengajuan Barang</a></li>
+                                    <li><a class="dropdown-item {{ request()->routeIs('admin.pengajuan.barang.index') || request()->routeIs('admin.pengajuan.barang.show') ? 'active' : '' }}" href="{{ route('admin.pengajuan.barang.index') }}">Kelola Pengajuan Barang</a></li>
                                 @endcan
                             </ul>
                         </li>
                     @endcanany
-
-                    @canany(['user-list', 'role-permission-manage'])
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle {{ request()->routeIs('admin.*') ? 'active' : '' }}" href="#" data-bs-toggle="dropdown">Pengaturan Admin</a>
-                            <ul class="dropdown-menu">
-                                @can('user-list')
-                                    <li><a class="dropdown-item" href="{{ route('admin.users.index') }}">Manajemen User</a></li>
-                                @endcan
-                                @can('role-permission-manage')
-                                    <li><a class="dropdown-item" href="{{ route('admin.roles.index') }}">Manajemen Peran</a></li>
-                                @endcan
-                            </ul>
-                        </li>
+                    
+                    {{-- Menu Pengajuan Barang untuk User Biasa (jika tidak di bawah Stok) --}}
+                    @canany(['pengajuan-barang-create', 'pengajuan-barang-list-own'])
+                        @unless (Auth::user()->hasPermissionTo('pengajuan-barang-list-all')) {{-- Hindari duplikasi jika sudah ada di 'Kelola Semua Pengajuan' --}}
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle {{ request()->is('pengajuan-barang*') ? 'active' : '' }}" href="#" id="navbarDropdownUserPengajuan" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    Pengajuan Saya
+                                </a>
+                                <ul class="dropdown-menu" aria-labelledby="navbarDropdownUserPengajuan">
+                                    @can('pengajuan-barang-create')
+                                        <li><a class="dropdown-item {{ request()->routeIs('pengajuan.barang.create') ? 'active' : '' }}" href="{{ route('pengajuan.barang.create') }}">Buat Pengajuan Baru</a></li>
+                                    @endcan
+                                    @can('pengajuan-barang-list-own')
+                                        <li><a class="dropdown-item {{ request()->routeIs('pengajuan.barang.index') ? 'active' : '' }}" href="{{ route('pengajuan.barang.index') }}">Daftar Pengajuan Saya</a></li>
+                                    @endcan
+                                </ul>
+                            </li>
+                        @endunless
                     @endcanany
 
-                    @can('pengajuan-barang-create')
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ route('pengajuan.barang.create') }}">Buat Pengajuan Barang</a>
-                        </li>
-                    @endcan
-
-                    @can('pengajuan-barang-list-own')
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ route('pengajuan.barang.index') }}">Pengajuan Saya</a>
-                        </li>
-                    @endcan
-
+                    {{-- Dropdown Laporan --}}
                     @canany(['view-laporan-stok', 'view-laporan-barang-masuk', 'view-laporan-barang-keluar'])
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle {{ request()->is('laporan/*') ? 'active' : '' }}" href="#" data-bs-toggle="dropdown">Laporan</a>
-                            <ul class="dropdown-menu">
-                                @can('view-laporan-stok')
-                                    <li><a class="dropdown-item" href="{{ route('laporan.stok.barang') }}">Laporan Stok Barang</a></li>
-                                @endcan
-                                @can('view-laporan-barang-masuk')
-                                    <li><a class="dropdown-item" href="{{ route('laporan.barang.masuk') }}">Laporan Barang Masuk</a></li>
-                                @endcan
-                                @can('view-laporan-barang-keluar')
-                                    <li><a class="dropdown-item" href="{{ route('laporan.barang.keluar') }}">Laporan Barang Keluar</a></li>
-                                @endcan
-                            </ul>
-                        </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle {{ request()->is('laporan/*') ? 'active' : '' }}" href="#" id="navbarDropdownLaporan" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Laporan
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarDropdownLaporan">
+                            @can('view-laporan-stok')
+                            <li><a class="dropdown-item {{ request()->routeIs('laporan.stok.barang') ? 'active' : '' }}" href="{{ route('laporan.stok.barang') }}">Laporan Stok Barang</a></li>
+                            @endcan
+                            @can('view-laporan-barang-masuk')
+                            <li><a class="dropdown-item {{ request()->routeIs('laporan.barang.masuk') ? 'active' : '' }}" href="{{ route('laporan.barang.masuk') }}">Laporan Barang Masuk</a></li>
+                            @endcan
+                            @can('view-laporan-barang-keluar')
+                            <li><a class="dropdown-item {{ request()->routeIs('laporan.barang.keluar') ? 'active' : '' }}" href="{{ route('laporan.barang.keluar') }}">Laporan Barang Keluar</a></li>
+                            @endcan
+                        </ul>
+                    </li>
+                    @endcanany
+
+                    {{-- Dropdown Pengaturan Admin --}}
+                    @canany(['user-list', 'role-permission-manage'])
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle {{ request()->is('admin/users*') || request()->is('admin/roles*') || request()->is('admin/permissions*') ? 'active' : '' }}" href="#" id="navbarDropdownAdminSettings" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Pengaturan Admin
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarDropdownAdminSettings">
+                            @can('user-list')
+                            <li><a class="dropdown-item {{ request()->routeIs('admin.users.*') ? 'active' : '' }}" href="{{ route('admin.users.index') }}">Manajemen User</a></li>
+                            @endcan
+                            @can('role-permission-manage')
+                            <li><a class="dropdown-item {{ request()->routeIs('admin.roles.*') ? 'active' : '' }}" href="{{ route('admin.roles.index') }}">Manajemen Peran</a></li>
+                            <li><a class="dropdown-item {{ request()->routeIs('admin.permissions.*') ? 'active' : '' }}" href="{{ route('admin.permissions.index') }}">Manajemen Hak Akses</a></li>
+                            @endcan
+                        </ul>
+                    </li>
                     @endcanany
                 @endauth
             </ul>
 
-            <ul class="navbar-nav ms-auto">
+            <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
                 @auth
+                    {{-- Item Notifikasi --}}
+                    {{-- $unreadNotificationsCount dari ViewComposer sudah dicek Auth::check() di AppServiceProvider --}}
+                    {{-- Pastikan user punya permission untuk melihat notifikasi (misalnya 'view-dashboard' atau permission lain) --}}
                     @if(Auth::user()->hasPermissionTo('view-dashboard') && isset($unreadNotificationsCount))
-                        <li class="nav-item dropdown">
-                            <a class="nav-link" href="#" data-bs-toggle="dropdown" title="Notifikasi">
-                                <i class="bi bi-bell-fill position-relative fs-5">
-                                    @if($unreadNotificationsCount > 0)
-                                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-light" style="font-size: 0.6em;">{{ $unreadNotificationsCount > 9 ? '9+' : $unreadNotificationsCount }}</span>
-                                    @endif
-                                </i>
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-end shadow mt-2" style="min-width: 350px; max-height: 400px; overflow-y: auto;">
-                                <li class="px-3 py-2 bg-light border-bottom d-flex justify-content-between align-items-center">
-                                    <h6 class="mb-0">Notifikasi</h6>
-                                    @if($unreadNotificationsCount > 0)
-                                        <form method="POST" action="{{ route('notifikasi.markAllAsRead') }}">
-                                            @csrf
-                                            <button class="btn btn-link btn-sm p-0 text-primary">Tandai semua dibaca</button>
-                                        </form>
-                                    @endif
-                                </li>
-                                @forelse($unreadNotifications as $notif)
-                                    <li>
-                                        <a class="dropdown-item small {{ $notif->read_at ? 'text-muted' : 'fw-bold' }}" href="{{ route('notifikasi.markAsReadAndRedirect', ['id' => $notif->id, 'url' => $notif->data['url'] ?? route('dashboard')]) }}">
-                                            <i class="bi bi-exclamation-triangle-fill me-2 {{ $notif->read_at ? 'text-secondary' : 'text-warning' }}"></i>
-                                            {!! $notif->data['pesan'] ?? 'Notifikasi baru' !!}
-                                            <div class="text-muted small"><i class="bi bi-clock"></i> {{ $notif->created_at->diffForHumans() }}</div>
-                                        </a>
-                                    </li>
-                                @empty
-                                    <li><p class="dropdown-item text-center text-muted small py-3 mb-0">Tidak ada notifikasi baru.</p></li>
-                                @endforelse
-                                @if(Auth::user()->notifications()->count() > 0)
-                                    <li><hr class="dropdown-divider my-1"></li>
-                                    <li><a class="dropdown-item text-center text-primary small py-2" href="{{ route('notifikasi.index') }}">Lihat Semua Notifikasi</a></li>
-                                @endif
-                            </ul>
-                        </li>
-                    @endif
-
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">{{ Auth::user()->name }}</a>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="{{ route('profile.edit') }}">Profil Saya</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <form id="logout-form" action="{{ route('logout') }}" method="POST">@csrf
-                                    <button class="dropdown-item text-danger" type="submit">Logout</button>
-                                </form>
+                        <a class="nav-link" href="#" id="navbarDropdownNotification" role="button" data-bs-toggle="dropdown" aria-expanded="false" title="Notifikasi">
+                            <i class="bi bi-bell-fill position-relative fs-5">
+                                @if($unreadNotificationsCount > 0)
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-light" style="font-size: 0.6em; padding: 0.25em 0.4em;">
+                                    {{ $unreadNotificationsCount > 9 ? '9+' : $unreadNotificationsCount }}
+                                    <span class="visually-hidden">notifikasi belum dibaca</span>
+                                </span>
+                                @endif
+                            </i>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2" aria-labelledby="navbarDropdownNotification" style="min-width: 350px; max-height: 400px; overflow-y: auto;">
+                            <li class="px-3 py-2 bg-light border-bottom d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0 fw-bold">Notifikasi</h6>
+                                @if($unreadNotificationsCount > 0)
+                                    <form action="{{ route('notifikasi.markAllAsRead') }}" method="POST" class="d-inline">
+                                        @csrf
+                                        <button type="submit" class="btn btn-link btn-sm p-0 text-primary fw-normal">Tandai semua dibaca</button>
+                                    </form>
+                                @endif
                             </li>
+                            @forelse($unreadNotifications as $notification)
+                                <li>
+                                    <a class="dropdown-item py-2 small d-flex align-items-start {{ $notification->read_at ? 'text-muted' : 'fw-bold' }}" 
+                                       href="{{ route('notifikasi.markAsReadAndRedirect', ['id' => $notification->id, 'url' => $notification->data['url'] ?? route('dashboard')]) }}">
+                                        <i class="bi {{ $notification->data['kode_barang'] ?? false ? 'bi-box-seam-fill' : 'bi-info-circle-fill' }} {{ $notification->read_at ? 'text-secondary' : 'text-warning' }} me-2 mt-1 fs-6"></i>
+                                        <div>
+                                            {!! $notification->data['pesan'] ?? 'Notifikasi baru.' !!}
+                                            <div class="{{ $notification->read_at ? 'text-muted' : 'text-primary' }}" style="font-size: 0.8em;">
+                                                <i class="bi bi-clock"></i> {{ $notification->created_at->diffForHumans() }}
+                                            </div>
+                                        </div>
+                                    </a>
+                                </li>
+                            @empty
+                                <li><p class="dropdown-item text-center text-muted small py-3 mb-0">Tidak ada notifikasi baru.</p></li>
+                            @endforelse
+                            @if(Auth::user()->notifications()->count() > 0)
+                            <li><hr class="dropdown-divider my-1"></li>
+                            <li><a class="dropdown-item text-center text-primary small py-2" href="{{ route('notifikasi.index') }}">Lihat Semua Notifikasi</a></li>
+                            @endif
                         </ul>
                     </li>
-                @else
-                    <li class="nav-item"><a class="nav-link" href="{{ route('login') }}">Login</a></li>
-                    @if (Route::has('register'))
-                        <li class="nav-item"><a class="nav-link" href="{{ route('register') }}">Register</a></li>
                     @endif
-                @endauth
+
+                    {{-- Dropdown Nama Pengguna --}}
+                    <li class="nav-item dropdown">
+                        <a id="navbarDropdownUser" class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            {{ Auth::user()->name }}
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end shadow border-0 mt-2" aria-labelledby="navbarDropdownUser">
+                            <a class="dropdown-item" href="{{ route('dashboard') }}">
+                                <i class="bi bi-speedometer2 me-2"></i>Dashboard
+                            </a>
+                            @if (Route::has('profile.edit'))
+                            <a class="dropdown-item" href="{{ route('profile.edit') }}">
+                                <i class="bi bi-person-circle me-2"></i>Profil Saya
+                            </a>
+                            @endif
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="{{ route('logout') }}"
+                               onclick="event.preventDefault();
+                                             document.getElementById('logout-form').submit();">
+                                <i class="bi bi-box-arrow-right me-2"></i>{{ __('Logout') }}
+                            </a>
+                            <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+                                @csrf
+                            </form>
+                        </div>
+                    </li>
+                @else  {{-- Ini untuk @guest (jika user belum login) --}}
+                    @if (Route::has('login'))
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('login') }}">{{ __('Login') }}</a>
+                        </li>
+                    @endif
+                    @if (Route::has('register'))
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('register') }}">{{ __('Register') }}</a>
+                        </li>
+                    @endif
+                @endguest
             </ul>
         </div>
     </div>
 </nav>
 
-<main class="flex-fill container py-4">
-    @yield('content')
+<main class="flex-shrink-0 py-4">
+    <div class="container-fluid px-md-4">
+        {{-- Global Flash Messages & Validation Errors --}}
+        @if(session('success'))
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                {{ session('success') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+        @if(session('error'))
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                {{ session('error') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+        @if ($errors->any())
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <h5 class="alert-heading"><i class="bi bi-exclamation-triangle-fill"></i> Terjadi Kesalahan Validasi!</h5>
+                <ul class="mb-0 ps-3">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+        
+        @yield('content')
+    </div>
 </main>
 
-<footer class="bg-light text-center text-muted py-3 mt-auto border-top small">
-    &copy; {{ date('Y') }} InventarisApp | Dibuat oleh Tim IT
+<footer class="footer mt-auto py-3 bg-light border-top">
+    <div class="container text-center">
+        <span class="text-muted small">&copy; {{ date('Y') }} {{ config('app.name', 'Aplikasi Inventaris') }}.</span>
+    </div>
 </footer>
 
 @stack('scripts')

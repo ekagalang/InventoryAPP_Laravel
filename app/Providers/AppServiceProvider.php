@@ -5,8 +5,9 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Auth;
-use App\Models\StockMovement;             // <--- PASTIKAN INI ADA
-use App\Observers\StockMovementObserver;  // <--- PASTIKAN INI ADA
+use App\Models\StockMovement;
+use App\Observers\StockMovementObserver;
+use Illuminate\Pagination\Paginator;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -23,7 +24,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Paginator::useBootstrapFive(); 
+        Paginator::useBootstrapFive(); 
 
         // === VIEW COMPOSER UNTUK NOTIFIKASI DI NAVBAR ===
         View::composer('layouts.app', function ($view) {

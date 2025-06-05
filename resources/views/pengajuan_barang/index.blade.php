@@ -79,19 +79,18 @@
                                         @endif
                                     </td>
                                     <td>{{ Str::limit($request->catatan_approval, 50) ?? '-' }}</td>
-                                    {{-- Aksi (Nanti bisa untuk detail atau cancel)
                                     <td>
                                         @if($request->status == 'Diajukan')
                                             @can('pengajuan-barang-cancel-own')
                                             <form action="#" method="POST" onsubmit="return confirm('Batalkan pengajuan ini?');">
                                                 @csrf
                                                 @method('PUT') {{-- Atau method lain sesuai route cancel --}}
-                                                {{-- <button type="submit" class="btn btn-outline-danger btn-sm">Batalkan</button>
+                                                <button type="submit" class="btn btn-outline-danger btn-sm">Batalkan</button>
                                             </form>
                                             @endcan
                                         @endif
-                                        {{-- <a href="#" class="btn btn-info btn-sm">Detail</a> --}}
-                                    {{--</td> --}}
+                                        <a href="#" class="btn btn-info btn-sm">Detail</a>
+                                    </td>
                                 </tr>
                             @endforeach
                         </tbody>
