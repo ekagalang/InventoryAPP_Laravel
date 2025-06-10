@@ -113,6 +113,55 @@
     </div>
     @endif
 
+    @if ($itemRequest->status == 'Diproses' && Auth::user()->hasPermissionTo('pengajuan-barang-return'))
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Aksi Pengembalian Barang</h5>
+            </div>
+            <div class="card-body">
+                <p>Catat pengembalian untuk barang ini. Stok akan dikembalikan sejumlah kuantitas yang disetujui sebelumnya.</p>
+                <form action="{{ route('admin.pengajuan.barang.return', $itemRequest->id) }}" method="POST" onsubmit="return confirm('Anda yakin ingin mencatat pengembalian untuk barang ini? Stok akan dikembalikan ke sistem.');">
+                    @csrf
+                    @method('PUT') {{-- Menggunakan PUT untuk update status --}}
+
+                    <div class="mb-3">
+                        <p class="mb-1"><strong>Barang:</strong> {{ $itemRequest->barang->nama_barang ?? 'N/A' }}</p>
+                        <p class="mb-1"><strong>Kuantitas yang akan dikembalikan:</strong> <span class="fw-bold">{{ number_format($itemRequest->kuantitas_disetujui, 0, ',', '.') }}</span> {{ $itemRequest->barang->unit->singkatan_unit ?? $itemRequest->barang->unit->nama_unit ?? '' }}</p>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="catatan_pengembalian" class="form-label">Catatan Pengembalian (Opsional, misal: kondisi barang)</label>
+                        <textarea class="form-control @error('catatan_pengembalian') is-invalid @enderror" id="catatan_pengembalian" name="catatan_pengembalian" rows="2">{{ old('catatan_pengembalian') }}</textarea>
+                        @error('catatan_pengembalian')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-box-arrow-in-down"></i> Catat Pengembalian</button>
+                </form>
+            </div>
+        </div>
+    @endif
+
+
+    {{-- Blok untuk menampilkan Detail Keputusan & Pemrosesan --}}
+    @if ($itemRequest->status == 'Disetujui' || $itemRequest->status == 'Ditolak' || $itemRequest->status == 'Diproses' || $itemRequest->status == 'Dibatalkan' || $itemRequest->status == 'Dikembalikan')
+        <div class="card shadow-sm mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Detail Keputusan & Pemrosesan</h5>
+            </div>
+            <div class="card-body">
+                {{-- ... (kode detail approval dan proses yang sudah ada) ... --}}
+
+                {{-- TAMBAHKAN INI UNTUK MENAMPILKAN INFO PENGEMBALIAN --}}
+                @if ($itemRequest->status == 'Dikembalikan')
+                <p><strong>Diterima Kembali oleh:</strong> {{ $itemRequest->penerimaPengembalian->name ?? 'N/A' }}</p>
+                <p><strong>Tanggal Dikembalikan:</strong> {{ $itemRequest->returned_at ? $itemRequest->returned_at->isoFormat('DD MMMM YYYY, HH:mm') : '-' }}</p>
+                <p><strong>Catatan Pengembalian:</strong> {{ $itemRequest->catatan_pengembalian ?? '-' }}</p>
+                @endif
+            </div>
+        </div>
+    @endif
+
     @if ($itemRequest->status == 'Disetujui' && Auth::user()->hasPermissionTo('pengajuan-barang-process'))
         <div class="card shadow-sm mb-4">
             <div class="card-header bg-success text-white">
@@ -166,11 +215,22 @@
             <p><strong>Catatan Approval/Penolakan:</strong> {{ $itemRequest->catatan_approval ?? '-' }}</p>
             @endif
 
-            @if ($itemRequest->status == 'Diproses' && $itemRequest->processed_by)
+            @if ($itemRequest->status == 'Diproses' && $itemRequest->tipe_pengajuan == 'peminjaman' && Auth::user()->hasPermissionTo('pengajuan-barang-return'))
             <hr>
-            <p><strong>Diproses oleh:</strong> {{ $itemRequest->pemroses->name ?? 'N/A' }}</p>
-            <p><strong>Tanggal Diproses:</strong> {{ $itemRequest->processed_at ? $itemRequest->processed_at->isoFormat('DD MMMM YYYY, HH:mm') : '-' }}</p>
-            <p><strong>Catatan Pemroses:</strong> {{ $itemRequest->catatan_pemroses ?? '-' }}</p>
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Aksi Pengembalian Aset</h5>
+                </div>
+                <div class="card-body">
+                    <form action="{{ route('admin.pengajuan.barang.return', $itemRequest->id) }}" method="POST" onsubmit="return confirm('Anda yakin ingin mencatat pengembalian untuk aset ini?');">
+                        @csrf
+                        @method('PUT')
+
+                        <p><strong>Diproses oleh:</strong> {{ $itemRequest->pemroses->name ?? 'N/A' }}</p>
+                        <p><strong>Tanggal Diproses:</strong> {{ $itemRequest->processed_at ? $itemRequest->processed_at->isoFormat('DD MMMM YYYY, HH:mm') : '-' }}</p>
+                        <p><strong>Catatan Pemroses:</strong> {{ $itemRequest->catatan_pemroses ?? '-' }}</p>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-box-arrow-in-down"></i> Catat Pengembalian</button>
+                </form>
             @endif
         </div>
     </div>

@@ -28,6 +28,23 @@
                     </div>
 
                     <div class="mb-3">
+                        <label class="form-label">Tipe Item <span class="text-danger">*</span></label>
+                        <div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="tipe_item" id="tipe_habis_pakai" value="habis_pakai" {{ old('tipe_item', $barang->tipe_item) == 'habis_pakai' ? 'checked' : '' }}>
+                                <label class="form-check-label" for="tipe_habis_pakai">Barang Habis Pakai</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="tipe_item" id="tipe_aset" value="aset" {{ old('tipe_item', $barang->tipe_item) == 'aset' ? 'checked' : '' }}>
+                                <label class="form-check-label" for="tipe_aset">Aset (Barang Pinjaman)</label>
+                            </div>
+                        </div>
+                        @error('tipe_item')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="mb-3">
                         <label for="kode_barang" class="form-label">Kode Barang (Opsional)</label>
                         <input type="text" class="form-control @error('kode_barang') is-invalid @enderror" id="kode_barang" name="kode_barang" value="{{ old('kode_barang', $barang->kode_barang) }}">
                         @error('kode_barang')

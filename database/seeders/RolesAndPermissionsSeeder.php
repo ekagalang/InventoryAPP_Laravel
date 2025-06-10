@@ -40,10 +40,10 @@ class RolesAndPermissionsSeeder extends Seeder
             'pengajuan-barang-list-own',    // Melihat daftar pengajuan milik sendiri
             'pengajuan-barang-create',      // Membuat pengajuan barang baru
             'pengajuan-barang-cancel-own',  // Membatalkan pengajuan milik sendiri (jika belum diproses)
-
             'pengajuan-barang-list-all',    // Melihat semua pengajuan barang (untuk Admin/Approver)
             'pengajuan-barang-approve',     // Menyetujui/Menolak pengajuan barang
             'pengajuan-barang-process',     // Memproses pengajuan yang sudah disetujui (mengeluarkan barang)
+            'pengajuan-barang-return',
 
             // Dashboard & Laporan
             'view-dashboard',           // TAMBAHKAN INI
@@ -88,7 +88,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'pengajuan-barang-list-all',    // Staf gudang juga bisa lihat semua pengajuan
             'pengajuan-barang-approve',     // Staf gudang bisa approve
             'pengajuan-barang-process',     // Staf gudang bisa proses
-
+            'pengajuan-barang-return',
             // ... permission StafGudang yang sudah ada ...
             'view-dashboard', // TAMBAHKAN INI
             'view-laporan-stok', // TAMBAHKAN INI

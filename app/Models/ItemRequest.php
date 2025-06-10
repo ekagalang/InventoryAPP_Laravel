@@ -15,6 +15,7 @@ class ItemRequest extends Model
     protected $fillable = [
         'user_id',
         'barang_id',
+        'tipe_pengajuan',
         'kuantitas_diminta',
         'kuantitas_disetujui',
         'keperluan',
@@ -26,6 +27,9 @@ class ItemRequest extends Model
         'processed_at',
         'catatan_approval',
         'catatan_pemroses',
+        'returned_by_staff_id', // TAMBAHKAN INI
+        'returned_at',          // TAMBAHKAN INI
+        'catatan_pengembalian',
     ];
 
     protected $casts = [
@@ -34,6 +38,7 @@ class ItemRequest extends Model
         'processed_at' => 'datetime',  // Casting ke objek Carbon DateTime
         'kuantitas_diminta' => 'integer',
         'kuantitas_disetujui' => 'integer',
+        'returned_at' => 'datetime',
     ];
 
     /**
@@ -68,5 +73,10 @@ class ItemRequest extends Model
     public function pemroses(): BelongsTo
     {
         return $this->belongsTo(User::class, 'processed_by');
+    }
+
+    public function penerimaPengembalian(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'returned_by_staff_id');
     }
 }

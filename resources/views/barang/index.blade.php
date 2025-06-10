@@ -10,6 +10,27 @@
     @endcan
 </div>
 
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <form action="{{ route('barang.index') }}" method="GET">
+                <div class="row align-items-end">
+                    <div class="col-md-4">
+                        <label for="tipe_item_filter" class="form-label">Filter Tipe Item</label>
+                        <select name="tipe_item_filter" id="tipe_item_filter" class="form-select">
+                            <option value="">Semua Tipe</option>
+                            <option value="habis_pakai" {{ request('tipe_item_filter') == 'habis_pakai' ? 'selected' : '' }}>Barang Habis Pakai</option>
+                            <option value="aset" {{ request('tipe_item_filter') == 'aset' ? 'selected' : '' }}>Aset (Barang Pinjaman)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary">Filter</button>
+                        <a href="{{ route('barang.index') }}" class="btn btn-secondary">Reset</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
 @if (session('success'))
     <div class="alert alert-success alert-dismissible fade show" role="alert">
         {{ session('success') }}
@@ -24,6 +45,7 @@
                 <tr>
                     <th class="text-center align-middle">No</th>
                     <th class="text-center align-middle">Nama Barang</th>
+                    <th class="text-center align-middle">Tipe Item</th>
                     <th class="text-center align-middle">Kategori</th>
                     <th class="text-center align-middle">Unit</th>
                     <th class="text-center align-middle">Lokasi</th>
@@ -39,6 +61,13 @@
                     <tr>
                         <td class="text-center align-middle">{{ $barangs->firstItem() + $key }}</td>
                         <td class="text-center align-middle">{{ $barang->nama_barang }}</td> {{-- Biarkan nama barang rata kiri --}}
+                        <td>
+                            @if($barang->tipe_item == 'aset')
+                                <span class="badge bg-info">Aset</span>
+                            @else
+                                <span class="badge bg-secondary">Habis Pakai</span>
+                            @endif
+                        </td>
                         <td class="text-center align-middle">{{ $barang->kategori->nama_kategori ?? '-' }}</td>
                         <td class="text-center align-middle">{{ $barang->unit->singkatan_unit ?? ($barang->unit->nama_unit ?? '-') }}</td>
                         <td class="text-center align-middle">{{ $barang->lokasi->nama_lokasi ?? '-' }}</td>

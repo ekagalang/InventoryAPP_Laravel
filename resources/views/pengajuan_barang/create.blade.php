@@ -1,13 +1,17 @@
 @extends('layouts.app')
 
-@section('title', 'Buat Pengajuan Barang Baru')
+@php
+    $judul = ($tipe == 'peminjaman') ? 'Buat Peminjaman Aset' : 'Buat Permintaan Barang';
+@endphp
+
+@section('title', $judul)
 
 @section('content')
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-md-8">
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <h1>Buat Pengajuan Barang</h1>
+                <h1>{{ $judul }}</h1>
                 {{-- Nanti bisa ada link ke daftar pengajuan saya --}}
                 {{-- <a href="{{ route('pengajuan.barang.index') }}" class="btn btn-secondary">Lihat Pengajuan Saya</a> --}}
             </div>
@@ -16,6 +20,8 @@
                 <div class="card-body">
                     <form action="{{ route('pengajuan.barang.store') }}" method="POST">
                         @csrf
+                        
+                        <input type="hidden" name="tipe_pengajuan" value="{{ $tipe }}">
 
                         <div class="mb-3">
                             <label for="barang_id" class="form-label">Barang yang Diajukan <span class="text-danger">*</span></label>

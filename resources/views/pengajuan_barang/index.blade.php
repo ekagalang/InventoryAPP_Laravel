@@ -7,7 +7,7 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h1>Pengajuan Barang Saya</h1>
         @can('pengajuan-barang-create')
-            <a href="{{ route('pengajuan.barang.create') }}" class="btn btn-primary"><i class="bi bi-plus-circle"></i> Buat Pengajuan Baru</a>
+            <a href="{{ route('pengajuan.barang.pilihTipe') }}" class="btn btn-primary"><i class="bi bi-plus-circle"></i> Buat Pengajuan Baru</a>
         @endcan
     </div>
 
@@ -30,7 +30,7 @@
                 <div class="alert alert-info text-center">
                     Anda belum memiliki pengajuan barang. <br>
                     @can('pengajuan-barang-create')
-                        <a href="{{ route('pengajuan.barang.create') }}">Buat pengajuan baru sekarang.</a>
+                        <a href="{{ route('pengajuan.barang.pilihTipe') }}">Buat pengajuan baru sekarang.</a>
                     @endcan
                 </div>
             @else
@@ -46,7 +46,7 @@
                                 <th>Tgl. Dibutuhkan</th>
                                 <th>Status</th>
                                 <th>Catatan Approval</th>
-                                {{-- <th>Aksi</th> --}}
+                                <th>Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -79,17 +79,21 @@
                                         @endif
                                     </td>
                                     <td>{{ Str::limit($request->catatan_approval, 50) ?? '-' }}</td>
-                                    <td>
+                                    <td> {{-- <-- TAMBAHKAN SEL KOLOM AKSI INI --}}
+                                        {{-- Tampilkan tombol Batalkan hanya jika status 'Diajukan' DAN user punya izin --}}
                                         @if($request->status == 'Diajukan')
                                             @can('pengajuan-barang-cancel-own')
-                                            <form action="#" method="POST" onsubmit="return confirm('Batalkan pengajuan ini?');">
+                                            <form action="{{ route('pengajuan.barang.cancel', $request->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin membatalkan pengajuan ini?');">
                                                 @csrf
-                                                @method('PUT') {{-- Atau method lain sesuai route cancel --}}
-                                                <button type="submit" class="btn btn-outline-danger btn-sm">Batalkan</button>
+                                                @method('PUT') {{-- Kita gunakan method PUT untuk update status --}}
+                                                <button type="submit" class="btn btn-outline-danger btn-sm" title="Batalkan Pengajuan">
+                                                    Batalkan
+                                                </button>
                                             </form>
                                             @endcan
+                                        @else
+                                            - {{-- Tampilkan strip jika tidak ada aksi yang bisa dilakukan --}}
                                         @endif
-                                        <a href="#" class="btn btn-info btn-sm">Detail</a>
                                     </td>
                                 </tr>
                             @endforeach

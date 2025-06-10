@@ -67,23 +67,26 @@ Route::middleware(['auth', 'verified'])->group(function () { // Menggunakan 'aut
     Route::prefix('admin')->name('admin.')->group(function () {
         Route::resource('users', UserController::class);
         Route::resource('roles', RoleController::class);
+        // Permission CRUD routes juga akan ada di sini nanti
         Route::resource('permissions', PermissionController::class);
-        // Anda bisa tambahkan route lain khusus admin di sini
-        // === ROUTE UNTUK MANAJEMEN PENGAJUAN BARANG OLEH ADMIN/STAF ===
-        Route::get('/pengajuan-barang', [ItemRequestController::class, 'adminIndex'])->name('pengajuan.barang.index'); // Daftar semua pengajuan
-        Route::get('/pengajuan-barang/{itemRequest}', [ItemRequestController::class, 'adminShow'])->name('pengajuan.barang.show'); // Detail pengajuan
-        Route::post('/pengajuan-barang/{itemRequest}/approve', [ItemRequestController::class, 'approve'])->name('pengajuan.barang.approve'); // Aksi setujui
-        Route::post('/pengajuan-barang/{itemRequest}/reject', [ItemRequestController::class, 'reject'])->name('pengajuan.barang.reject');   // Aksi tolak
+
+        // === PINDAHKAN SEMUA ROUTE MANAJEMEN PENGAJUAN KE DALAM GRUP INI ===
+        Route::get('/pengajuan-barang', [ItemRequestController::class, 'adminIndex'])->name('pengajuan.barang.index');
+        Route::get('/pengajuan-barang/{itemRequest}', [ItemRequestController::class, 'adminShow'])->name('pengajuan.barang.show');
+        Route::post('/pengajuan-barang/{itemRequest}/approve', [ItemRequestController::class, 'approve'])->name('pengajuan.barang.approve');
+        Route::post('/pengajuan-barang/{itemRequest}/reject', [ItemRequestController::class, 'reject'])->name('pengajuan.barang.reject');
         Route::post('/pengajuan-barang/{itemRequest}/process', [ItemRequestController::class, 'process'])->name('pengajuan.barang.process');
+        Route::put('/pengajuan-barang/{itemRequest}/return', [ItemRequestController::class, 'storeReturn'])->name('pengajuan.barang.return'); // Tambahkan ini jika belum ada
     });
 
     // === ROUTE UNTUK PENGAJUAN BARANG OLEH PENGGUNA ===
-    Route::get('/pengajuan-barang', [ItemRequestController::class, 'myRequests'])->name('pengajuan.barang.index'); // Daftar pengajuan milik pengguna
-    Route::get('/pengajuan-barang/create', [ItemRequestController::class, 'create'])->name('pengajuan.barang.create'); // Form buat pengajuan
-    Route::post('/pengajuan-barang', [ItemRequestController::class, 'store'])->name('pengajuan.barang.store');     // Simpan pengajuan baru
-    // Nanti kita bisa tambahkan route untuk show detail pengajuan, cancel, dll.
-    Route::get('/pengajuan-barang/{itemRequest}', [ItemRequestController::class, 'show'])->name('pengajuan.barang.show');
-    Route::put('/pengajuan-barang/{itemRequest}/cancel', [ItemRequestController::class, 'cancel'])->name('pengajuan.barang.cancel');
+    Route::get('/pengajuan-barang/pilih-tipe', [ItemRequestController::class, 'pilihTipe'])->name('pengajuan.barang.pilihTipe');
+    Route::get('/pengajuan-barang/create/{tipe}', [ItemRequestController::class, 'create'])->name('pengajuan.barang.create');
+    Route::get('/pengajuan-barang', [ItemRequestController::class, 'myRequests'])->name('pengajuan.barang.index');
+    Route::post('/pengajuan-barang', [ItemRequestController::class, 'store'])->name('pengajuan.barang.store');
+    Route::put('/pengajuan-barang/{itemRequest}/cancel', [ItemRequestController::class, 'cancelOwnRequest'])->name('pengajuan.barang.cancel');
+    // Jika Anda tidak menggunakan halaman detail untuk user biasa, sebaiknya hapus route 'show' ini untuk menghindari kebingungan
+    // Route::get('/pengajuan-barang/{itemRequest}', [ItemRequestController::class, 'show'])->name('pengajuan.barang.show'); 
 
     // === ROUTE UNTUK LAPORAN ===
     Route::prefix('laporan')->name('laporan.')->group(function () {

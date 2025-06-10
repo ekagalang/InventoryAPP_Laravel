@@ -37,7 +37,7 @@
 
                     {{-- Dropdown Data Master --}}
                     {{-- Tampilkan jika user punya salah satu permission untuk lihat item di dalamnya ATAU peran tertentu --}}
-                    @canany(['kategori-list', 'unit-list', 'lokasi-list'])
+                    @hasanyrole('Admin|StafGudang')
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle {{ request()->is('kategori*') || request()->is('unit*') || request()->is('lokasi*') ? 'active' : '' }}" href="#" id="navbarDropdownDataMaster" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 Data Master
@@ -54,10 +54,10 @@
                                 @endcan
                             </ul>
                         </li>
-                    @endcanany
+                    @endhasanyrole
 
                     {{-- Dropdown Manajemen Stok --}}
-                    @canany(['stok-pergerakan-list', 'stok-masuk-create', 'stok-keluar-create', 'stok-koreksi', 'pengajuan-barang-list-all'])
+                    @hasanyrole('Admin|StafGudang')
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle {{ request()->is('stok*') || request()->is('admin/pengajuan-barang*') ? 'active' : '' }}" href="#" id="navbarDropdownStok" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 Manajemen Stok
@@ -84,7 +84,7 @@
                                 @endcan
                             </ul>
                         </li>
-                    @endcanany
+                    @endhasanyrole
                     
                     {{-- Menu Pengajuan Barang untuk User Biasa (jika tidak di bawah Stok) --}}
                     @canany(['pengajuan-barang-create', 'pengajuan-barang-list-own'])
@@ -95,7 +95,7 @@
                                 </a>
                                 <ul class="dropdown-menu" aria-labelledby="navbarDropdownUserPengajuan">
                                     @can('pengajuan-barang-create')
-                                        <li><a class="dropdown-item {{ request()->routeIs('pengajuan.barang.create') ? 'active' : '' }}" href="{{ route('pengajuan.barang.create') }}">Buat Pengajuan Baru</a></li>
+                                        <li><a class="dropdown-item {{ request()->routeIs('pengajuan.barang.create') ? 'active' : '' }}" href="{{ route('pengajuan.barang.pilihTipe') }}">Buat Pengajuan Baru</a></li>
                                     @endcan
                                     @can('pengajuan-barang-list-own')
                                         <li><a class="dropdown-item {{ request()->routeIs('pengajuan.barang.index') ? 'active' : '' }}" href="{{ route('pengajuan.barang.index') }}">Daftar Pengajuan Saya</a></li>

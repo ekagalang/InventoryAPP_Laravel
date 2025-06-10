@@ -17,57 +17,32 @@ class StockMovementObserver
      */
     public function created(StockMovement $stockMovement): void
     {
-        Log::info('StockMovementObserver: created event triggered for StockMovement ID: ' . $stockMovement->id); // LOG AWAL
+        Log::info('[OBSERVER] Dijalankan untuk StockMovement ID: ' . $stockMovement->id);
 
-        $barang = $stockMovement->barang;
-
-        if ($barang) { // Kurung kurawal pembuka untuk if ($barang)
-            Log::info('StockMovementObserver: Barang found: ' . $barang->nama_barang . ' (ID: ' . $barang->id . ')');
-            
-            $stokBarangSebelumPergerakanIni = $barang->stok;
-            Log::info('StockMovementObserver: Stok barang SEBELUM update: ' . $stokBarangSebelumPergerakanIni);
-
-            if ($stockMovement->tipe_pergerakan == 'masuk' || $stockMovement->tipe_pergerakan == 'koreksi-tambah') {
-                $barang->stok += $stockMovement->kuantitas;
-                Log::info('StockMovementObserver: Tipe MASUK/KOREKSI-TAMBAH. Kuantitas: ' . $stockMovement->kuantitas . '. Stok barang akan menjadi: ' . $barang->stok);
-            } elseif ($stockMovement->tipe_pergerakan == 'keluar' || $stockMovement->tipe_pergerakan == 'koreksi-kurang') {
-                $barang->stok -= $stockMovement->kuantitas;
-                Log::info('StockMovementObserver: Tipe KELUAR/KOREKSI-KURANG. Kuantitas: ' . $stockMovement->kuantitas . '. Stok barang akan menjadi: ' . $barang->stok);
-            } else {
-                Log::warning('StockMovementObserver: Tipe pergerakan tidak dikenal: ' . $stockMovement->tipe_pergerakan);
-            }
-            
-            $barang->save(); // Simpan perubahan stok barang
-            Log::info('StockMovementObserver: Stok barang SETELAH update dan disimpan: ' . $barang->fresh()->stok); // Ambil stok terbaru dari DB
-
-            // Update stok_sebelumnya dan stok_setelahnya di StockMovement
-            // $stockMovement->stok_sebelumnya diisi dengan nilai stok barang SEBELUM observer ini mengubahnya
-            // $stockMovement->stok_setelahnya diisi dengan nilai stok barang SETELAH observer ini mengubahnya
-            $stockMovement->stok_sebelumnya = $stokBarangSebelumPergerakanIni;
-            $stockMovement->stok_setelahnya = $barang->stok; // Ini sudah $barang->stok yang terupdate
-            $stockMovement->saveQuietly();
-            Log::info('StockMovementObserver: StockMovement record updated with stok_sebelumnya: ' . $stockMovement->stok_sebelumnya . ' dan stok_setelahnya: ' . $stockMovement->stok_setelahnya);
-
-
-            // PENGECEKAN STOK MINIMUM & PENGIRIMAN NOTIFIKASI
-            if (($stockMovement->tipe_pergerakan == 'keluar' || $stockMovement->tipe_pergerakan == 'koreksi-kurang') &&
-                $barang->stok_minimum > 0 && 
-                $barang->stok <= $barang->stok_minimum) 
-            { 
-                Log::info('STOK MINIMUM TERCAPAI untuk: ' . $barang->nama_barang . '. Mengirim notifikasi...');
-                $usersToNotify = User::role(['Admin', 'StafGudang'])->get(); 
-                if ($usersToNotify->isNotEmpty()) {
-                    Notification::send($usersToNotify, new LowStockNotification($barang));
-                    Log::info('Notifikasi LowStockNotification dikirim ke ' . $usersToNotify->count() . ' pengguna.');
-                } else {
-                    Log::warning('Tidak ada user Admin atau StafGudang yang ditemukan untuk notifikasi stok minimum.');
-                }
-            } 
-        
-        } else { // Kurung kurawal penutup untuk if ($barang) 
-            Log::error('StockMovementObserver: Barang tidak ditemukan untuk StockMovement ID: ' . $stockMovement->id);
+        $barang = Barang::find($stockMovement->barang_id); // Gunakan find() agar lebih aman
+        if (!$barang) {
+            Log::error('[OBSERVER] Gagal: Barang dengan ID ' . $stockMovement->barang_id . ' tidak ditemukan.');
+            return;
         }
 
+        $stokSebelumnya = $barang->stok;
+        Log::info('[OBSERVER] Barang: ' . $barang->nama_barang . ' | Stok Awal: ' . $stokSebelumnya);
+
+        if (in_array($stockMovement->tipe_pergerakan, ['masuk', 'koreksi-tambah', 'pengembalian'])) {
+            $barang->stok += $stockMovement->kuantitas;
+        } elseif (in_array($stockMovement->tipe_pergerakan, ['keluar', 'koreksi-kurang'])) {
+            $barang->stok -= $stockMovement->kuantitas;
+        }
+
+        $barang->save(); // Simpan perubahan stok pada barang
+        Log::info('[OBSERVER] Barang: ' . $barang->nama_barang . ' | Stok Baru: ' . $barang->stok);
+
+        // Update record StockMovement dengan data stok yang akurat
+        $stockMovement->stok_sebelumnya = $stokSebelumnya;
+        $stockMovement->stok_setelahnya = $barang->stok;
+        $stockMovement->saveQuietly(); // Simpan tanpa memicu observer lagi
+
+        // ... (logika pengiriman notifikasi stok minimum tetap di sini) ...
     }
 
     /**

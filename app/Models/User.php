@@ -78,4 +78,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(ItemRequest::class, 'processed_by');
     }
+
+    public function itemRequestsDiterimaPengembaliannya(): HasMany
+    {
+        return $this->hasMany(ItemRequest::class, 'returned_by_staff_id');
+    }
 }

@@ -4,10 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Models\Barang; // Import model Barang
 use App\Models\ItemRequest; // Import model ItemRequest
+use App\Models\StockMovement; // Jika belum ada
+use App\Models\User;
+use Illuminate\Validation\Rule;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth; // Untuk mendapatkan user yang login
-use App\Models\StockMovement; // Jika belum ada
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
+use App\Notifications\PengajuanBaruNotification;
+use App\Notifications\PengajuanStatusUpdateNotification;
+
 
 class ItemRequestController extends Controller
 {
@@ -19,19 +25,26 @@ class ItemRequestController extends Controller
     /**
      * Menampilkan form untuk membuat pengajuan barang baru.
      */
-    public function create()
+    public function create(string $tipe) // Terima parameter $tipe
     {
         if (!Auth::user()->hasPermissionTo('pengajuan-barang-create')) {
-            abort(403, 'AKSES DITOLAK: Anda tidak memiliki izin untuk membuat pengajuan barang.');
+            abort(403, 'AKSES DITOLAK.');
         }
 
-        // Ambil barang yang statusnya 'aktif' dan mungkin punya stok (tergantung aturan bisnis)
-        $barangs = Barang::where('status', 'aktif') 
-                         // ->where('stok', '>', 0) // Opsional: hanya tampilkan barang yang ada stok
-                         ->orderBy('nama_barang', 'asc')
-                         ->get();
+        // Validasi tipe
+        if (!in_array($tipe, ['permintaan', 'peminjaman'])) {
+            abort(404, 'Tipe pengajuan tidak valid.');
+        }
 
-        return view('pengajuan_barang.create', compact('barangs'));
+        // Filter barang berdasarkan tipe
+        $tipeItem = ($tipe == 'permintaan') ? 'habis_pakai' : 'aset';
+
+        $barangs = Barang::where('tipe_item', $tipeItem)
+                        ->where('status', 'aktif') 
+                        ->orderBy('nama_barang', 'asc')
+                        ->get();
+
+        return view('pengajuan_barang.create', compact('barangs', 'tipe')); // Kirim $tipe ke view
     }
 
     public function store(Request $request)
@@ -42,6 +55,7 @@ class ItemRequestController extends Controller
 
         $validatedData = $request->validate([
             'barang_id' => 'required|exists:barangs,id',
+            'tipe_pengajuan' => 'required|in:permintaan,peminjaman',
             'kuantitas_diminta' => 'required|integer|min:1',
             'tanggal_dibutuhkan' => 'nullable|date|after_or_equal:today',
             'keperluan' => 'required|string|max:1000',
@@ -56,14 +70,23 @@ class ItemRequestController extends Controller
         //     return back()->withErrors(['kuantitas_diminta' => 'Kuantitas yang diminta melebihi stok tersedia (Stok: ' . $barang->stok . ').'])->withInput();
         // }
 
-        ItemRequest::create([
+        $itemRequest = ItemRequest::create([
             'user_id' => Auth::id(), // ID pengguna yang mengajukan
             'barang_id' => $validatedData['barang_id'],
+            'tipe_pengajuan' => $validatedData['tipe_pengajuan'],
             'kuantitas_diminta' => $validatedData['kuantitas_diminta'],
             'keperluan' => $validatedData['keperluan'],
             'tanggal_dibutuhkan' => $validatedData['tanggal_dibutuhkan'],
             'status' => 'Diajukan', // Status awal
         ]);
+
+        // Kirim notifikasi ke Admin & StafGudang
+        $usersToNotify = User::role(['Admin', 'StafGudang'])->get();
+        if ($usersToNotify->isNotEmpty()) {
+            // Eager load relasi untuk mencegah N+1 problem jika notifikasi di-queue
+            $itemRequest->load('pemohon', 'barang'); 
+            Notification::send($usersToNotify, new PengajuanBaruNotification($itemRequest));
+        }
 
         // Arahkan ke halaman daftar pengajuan milik pengguna (akan kita buat nanti)
         return redirect()->route('pengajuan.barang.index') 
@@ -175,10 +198,15 @@ class ItemRequestController extends Controller
         $itemRequest->catatan_approval = $request->catatan_approval;
         $itemRequest->save();
 
-        // TODO: Kirim notifikasi ke pemohon (Nanti)
+        // Kirim notifikasi ke pemohon
+        if ($itemRequest->pemohon) { // Pastikan relasi pemohon ada
+        // Eager load relasi barang untuk data di notifikasi
+            $itemRequest->load('barang');
+            $itemRequest->pemohon->notify(new PengajuanStatusUpdateNotification($itemRequest));
+        }
 
         return redirect()->route('admin.pengajuan.barang.show', $itemRequest->id)
-                         ->with('success', 'Pengajuan barang berhasil disetujui.');
+                         ->with('success', 'Pengajuan barang telah ditolak.');
     }
 
     /**
@@ -207,7 +235,10 @@ class ItemRequestController extends Controller
         $itemRequest->kuantitas_disetujui = 0; // Kuantitas disetujui jadi 0
         $itemRequest->save();
 
-        // TODO: Kirim notifikasi ke pemohon (Nanti)
+        if ($itemRequest->pemohon) {
+            $itemRequest->load('barang');
+            $itemRequest->pemohon->notify(new PengajuanStatusUpdateNotification($itemRequest));
+        }
 
         return redirect()->route('admin.pengajuan.barang.show', $itemRequest->id)
                          ->with('success', 'Pengajuan barang telah ditolak.');
@@ -268,7 +299,10 @@ class ItemRequestController extends Controller
 
             DB::commit(); // Semua operasi berhasil
 
-            // TODO: Kirim notifikasi ke pemohon bahwa barang sudah diproses (Nanti)
+            if ($itemRequest->pemohon) {
+                $itemRequest->load('barang');
+                $itemRequest->pemohon->notify(new PengajuanStatusUpdateNotification($itemRequest));
+            }
 
             return redirect()->route('admin.pengajuan.barang.show', $itemRequest->id)
                              ->with('success', 'Pengajuan barang berhasil diproses dan stok telah diperbarui.');
@@ -282,32 +316,90 @@ class ItemRequestController extends Controller
 
     public function cancelOwnRequest(ItemRequest $itemRequest) // Menggunakan Route Model Binding
     {
-        // Pastikan user yang login adalah pemilik pengajuan
+        // Pengecekan 1: Pastikan user yang login adalah pemilik pengajuan
         if ($itemRequest->user_id !== Auth::id()) {
             abort(403, 'AKSES DITOLAK: Anda bukan pemilik pengajuan ini.');
         }
 
-        // Pastikan user memiliki permission untuk membatalkan
+        // Pengecekan 2: Pastikan user memiliki permission untuk membatalkan
         if (!Auth::user()->hasPermissionTo('pengajuan-barang-cancel-own')) {
             abort(403, 'AKSES DITOLAK: Anda tidak memiliki izin untuk membatalkan pengajuan.');
         }
 
-        // Hanya pengajuan dengan status 'Diajukan' yang bisa dibatalkan oleh pemohon
+        // Pengecekan 3: Hanya pengajuan dengan status 'Diajukan' yang bisa dibatalkan
         if ($itemRequest->status !== 'Diajukan') {
             return redirect()->route('pengajuan.barang.index')
-                             ->with('error', 'Pengajuan ini tidak dapat dibatalkan (Status saat ini: '.$itemRequest->status.').');
+                            ->with('error', 'Pengajuan ini tidak dapat dibatalkan (Status saat ini: '.$itemRequest->status.').');
         }
 
+        // Jika semua pengecekan lolos, update status
         $itemRequest->status = 'Dibatalkan';
-        // Anda bisa menambahkan kolom untuk user_yang_membatalkan dan tanggal_pembatalan jika perlu
-        // $itemRequest->cancelled_by = Auth::id();
-        // $itemRequest->cancelled_at = now();
         $itemRequest->save();
 
-        // TODO: Kirim notifikasi ke Admin/Staf bahwa pengajuan dibatalkan (Opsional)
+        // Kirim notifikasi ke pemohon untuk konfirmasi pembatalan
+        if ($itemRequest->pemohon) {
+            $itemRequest->load('barang');
+            $itemRequest->pemohon->notify(new PengajuanStatusUpdateNotification($itemRequest));
+        }
 
         return redirect()->route('pengajuan.barang.index')
-                         ->with('success', 'Pengajuan barang (ID: '.$itemRequest->id.') berhasil dibatalkan.');
+                        ->with('success', 'Pengajuan barang (ID: '.$itemRequest->id.') berhasil dibatalkan.');
+    }
+
+    public function storeReturn(Request $request, ItemRequest $itemRequest)
+    {
+        if (!Auth::user()->hasPermissionTo('pengajuan-barang-return')) {
+            abort(403, 'AKSES DITOLAK: Anda tidak memiliki izin untuk mencatat pengembalian barang.');
+        }
+
+        // Hanya pengajuan dengan status 'Diproses' yang bisa dikembalikan
+        if ($itemRequest->status !== 'Diproses') {
+            return redirect()->route('admin.pengajuan.barang.show', $itemRequest->id)
+                            ->with('error', 'Pengajuan ini tidak dalam status "Diproses" dan tidak dapat dikembalikan.');
+        }
+
+        $validatedData = $request->validate([
+            'catatan_pengembalian' => 'nullable|string|max:1000',
+        ]);
+
+        DB::beginTransaction();
+        try {
+            // 1. Buat record Stock Movement (barang masuk tipe 'pengembalian')
+            StockMovement::create([
+                'barang_id' => $itemRequest->barang_id,
+                'user_id' => Auth::id(), // User yang menerima pengembalian
+                'tipe_pergerakan' => 'pengembalian',
+                'kuantitas' => $itemRequest->kuantitas_disetujui, // Kuantitas sesuai yang disetujui/dikeluarkan
+                'tanggal_pergerakan' => now(),
+                'catatan' => 'Pengembalian barang dari Pengajuan ID: ' . $itemRequest->id . ($validatedData['catatan_pengembalian'] ? ' - Catatan Pengembalian: ' . $validatedData['catatan_pengembalian'] : ''),
+            ]);
+
+            // 2. Update status ItemRequest menjadi 'Dikembalikan'
+            $itemRequest->status = 'Dikembalikan';
+            $itemRequest->returned_by_staff_id = Auth::id();
+            $itemRequest->returned_at = now();
+            $itemRequest->catatan_pengembalian = $validatedData['catatan_pengembalian'];
+            $itemRequest->save();
+
+            DB::commit();
+
+            return redirect()->route('admin.pengajuan.barang.show', $itemRequest->id)
+                            ->with('success', 'Pengembalian barang berhasil dicatat dan stok telah dikembalikan.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->route('admin.pengajuan.barang.show', $itemRequest->id)
+                            ->with('error', 'Terjadi kesalahan saat mencatat pengembalian: ' . $e->getMessage());
+        }
+    }
+
+    public function pilihTipe()
+    {
+        // Permission check, pastikan user bisa membuat salah satu tipe pengajuan
+        if (!Auth::user()->hasAnyPermission(['pengajuan-barang-create'])) {
+            abort(403, 'AKSES DITOLAK: Anda tidak memiliki izin untuk membuat pengajuan.');
+        }
+        return view('pengajuan_barang.pilih_tipe');
     }
 
     // Method store akan kita isi nanti

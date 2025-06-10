@@ -18,11 +18,19 @@ class BarangController extends Controller
         // Pengecekan permission akan dilakukan di setiap method.
     }
 
-    public function index()
+    public function index(Request $request)
     {
         if (!Auth::user()->hasPermissionTo('barang-list')) {
             abort(403, 'AKSES DITOLAK: Anda tidak memiliki izin untuk melihat daftar barang.');
         }
+
+        $query = Barang::with(['kategori', 'unit', 'lokasi']);
+
+        // TAMBAHKAN BLOK FILTER INI
+        if ($request->filled('tipe_item_filter')) {
+            $query->where('tipe_item', $request->tipe_item_filter);
+        }
+
         $barangs = Barang::with(['kategori', 'unit', 'lokasi'])->orderBy('created_at', 'desc')->paginate(10);
         return view('barang.index', compact('barangs'));
     }
@@ -46,6 +54,7 @@ class BarangController extends Controller
         // ... validasi data ...
         $validatedData = $request->validate([ /* ... aturan validasi Anda ... */
             'nama_barang' => 'required|string|max:255',
+            'tipe_item'   => 'required|in:habis_pakai,aset',
             'kode_barang' => 'nullable|string|max:50|unique:barangs,kode_barang',
             'deskripsi'   => 'nullable|string',
             'kategori_id' => 'nullable|exists:kategoris,id',

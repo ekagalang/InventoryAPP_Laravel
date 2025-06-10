@@ -27,6 +27,23 @@
                     </div>
 
                     <div class="mb-3">
+                        <label class="form-label">Tipe Item <span class="text-danger">*</span></label>
+                        <div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="tipe_item" id="tipe_habis_pakai" value="habis_pakai" {{ old('tipe_item', 'habis_pakai') == 'habis_pakai' ? 'checked' : '' }}>
+                                <label class="form-check-label" for="tipe_habis_pakai">Barang Habis Pakai</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="tipe_item" id="tipe_aset" value="aset" {{ old('tipe_item') == 'aset' ? 'checked' : '' }}>
+                                <label class="form-check-label" for="tipe_aset">Aset (Barang Pinjaman)</label>
+                            </div>
+                        </div>
+                        @error('tipe_item')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="mb-3">
                         <label for="kode_barang" class="form-label">Kode Barang (Opsional)</label>
                         <input type="text" class="form-control @error('kode_barang') is-invalid @enderror" id="kode_barang" name="kode_barang" value="{{ old('kode_barang') }}">
                         @error('kode_barang')
@@ -98,15 +115,6 @@
                     </div>
 
                     <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="stok" class="form-label">Stok Awal</label>
-                            <input type="number" class="form-control @error('stok') is-invalid @enderror" id="stok" name="stok" value="{{ old('stok', 0) }}" min="0">
-                            @error('stok')
-                                <div class="invalid-feedback">
-                                    {{ $message }}
-                                </div>
-                            @enderror
-                        </div>
                         <div class="row">
                             <div class="col-md-6 mb-3"> {{-- Stok Awal --}}
                                 <label for="stok" class="form-label">Stok Awal</label>
