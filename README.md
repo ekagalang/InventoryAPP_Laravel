@@ -1,61 +1,126 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Aplikasi Inventaris (Inventory Management App)
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Aplikasi Inventaris ini adalah sebuah sistem berbasis web yang dibangun menggunakan **Laravel** untuk mengelola inventaris barang dan aset secara komprehensif. Aplikasi ini dirancang untuk membantu organisasi dalam melacak stok, mengelola pergerakan barang, menangani alur permintaan/peminjaman, serta mengatur hak akses pengguna dengan sistem yang terstruktur dan aman.
 
-## About Laravel
+Aplikasi ini mencakup berbagai fitur inti yang menjadikannya solusi solid untuk manajemen inventaris, mulai dari pengelolaan data master hingga laporan, notifikasi otomatis, dan audit trail.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+![Dashboard Aplikasi Inventaris](https://drive.google.com/uc?export=view&id=1GT4uZTDfMCGzqdNBPvPu1RVOCWe2nuaq)
+*(Ganti URL di atas dengan screenshot dashboard aplikasi Anda untuk tampilan yang lebih menarik)*
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+---
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Fitur Utama
 
-## Learning Laravel
+### 1. 👑 Manajemen Peran & Hak Akses (Roles & Permissions)
+Sistem keamanan yang fleksibel dan granular menggunakan `spatie/laravel-permission`.
+- **Manajemen Pengguna:** Admin dapat melakukan CRUD penuh untuk data pengguna.
+- **Manajemen Peran (Roles):** Admin memiliki UI untuk membuat, mengedit, dan menghapus peran (misalnya, Admin, StafGudang, Viewer).
+- **Manajemen Hak Akses (Permissions):** Admin dapat secara dinamis membuat, mengedit, dan menghapus hak akses spesifik dari antarmuka web.
+- **Assignment Dinamis:** Admin dapat dengan mudah memberikan atau mengubah peran untuk setiap pengguna, serta mengatur hak akses apa saja yang dimiliki oleh setiap peran.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### 2. 📦 Manajemen Data Master & Stok
+Fondasi data yang kuat untuk memastikan konsistensi di seluruh aplikasi.
+- **Manajemen Barang & Aset:** CRUD penuh untuk data barang, lengkap dengan pembedaan antara **Barang Habis Pakai** dan **Aset** (barang pinjaman).
+- **Manajemen Kategori, Unit, dan Lokasi:** CRUD penuh untuk mengelola kategori barang, satuan (Pcs, Box, dll.), dan lokasi penyimpanan fisik.
+- **Update Stok Otomatis:** Setiap transaksi (masuk, keluar, koreksi, pengembalian) akan secara otomatis memperbarui jumlah stok utama pada data barang menggunakan Laravel Observer.
+- **Koreksi Stok (Stok Opname):** Fitur untuk menyesuaikan jumlah stok di sistem agar sesuai dengan jumlah fisik di lapangan.
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+### 3. 📑 Sistem Permintaan & Peminjaman Barang
+Alur kerja yang terstruktur untuk mengelola permintaan dan peminjaman barang.
+- **Alur Ganda:** Pengguna bisa membuat pengajuan untuk **"Minta Barang"** (untuk barang habis pakai) atau **"Pinjam Aset"**.
+- **Proses Persetujuan (Approval Workflow):** Admin atau Staf Gudang dapat meninjau, **menyetujui (approve)**, atau **menolak (reject)** setiap pengajuan.
+- **Pemrosesan & Pengeluaran Barang:** Pengajuan yang disetujui dapat diproses, yang akan membuat catatan barang keluar dan mengurangi stok.
+- **Alur Pengembalian Aset:** Aset yang dipinjam dapat dicatat saat dikembalikan, yang akan menambah kembali stok secara otomatis.
+- **Pembatalan oleh Pengguna:** Pengguna dapat membatalkan pengajuannya sendiri selama statusnya masih "Diajukan".
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### 4. 📊 Dashboard, Laporan & Notifikasi
+Menyajikan data menjadi informasi yang berguna dan memberikan peringatan proaktif.
+- **Dashboard Interaktif:** Menampilkan ringkasan statistik kunci dan **grafik visual** untuk komposisi status barang serta tren pergerakan stok.
+- **Laporan Lengkap:** Laporan Stok Barang, Barang Masuk, dan Barang Keluar dengan fitur filter.
+- **Sistem Notifikasi:** Pemberitahuan otomatis untuk stok minimum dan setiap tahapan alur pengajuan barang, tampil di navbar dan memiliki halaman riwayat notifikasi.
 
-## Laravel Sponsors
+### 5. 🛡️ Pelacakan & Riwayat (Audit Trail)
+Meningkatkan akuntabilitas dan keamanan dengan mencatat semua aktivitas penting.
+- **Log Aktivitas Pengguna:** Menggunakan `spatie/laravel-activitylog` untuk secara otomatis mencatat setiap aksi Create, Update, dan Delete pada data-data penting (Barang, Kategori, User, dll.).
+- **Tampilan Log:** Admin dapat melihat riwayat semua aktivitas sistem, termasuk detail perubahan data (nilai sebelum dan sesudah), siapa pelakunya, dan kapan terjadinya.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+---
 
-### Premium Partners
+## Teknologi yang Digunakan
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+- **Backend:** Laravel Framework
+- **Frontend:** Blade, Bootstrap 5, Chart.js
+- **Database:** MySQL
+- **Paket Utama:**
+    - `laravel/breeze` (untuk scaffolding otentikasi awal)
+    - `spatie/laravel-permission` (untuk manajemen Peran & Hak Akses)
+    - `maatwebsite/excel` (untuk fungsionalitas Ekspor ke Excel)
+    - `spatie/laravel-activitylog` (untuk Audit Trail/Log Aktivitas)
 
-## Contributing
+---
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## Cara Instalasi & Setup Lokal
 
-## Code of Conduct
+Berikut adalah langkah-langkah untuk menjalankan proyek ini di lingkungan development lokal.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+1.  **Clone repositori ini:**
+    ```bash
+    git clone [URL_REPO_ANDA]
+    ```
 
-## Security Vulnerabilities
+2.  **Pindah ke direktori proyek:**
+    ```bash
+    cd [NAMA_FOLDER_PROYEK]
+    ```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+3.  **Install dependensi Composer:**
+    ```bash
+    composer install
+    ```
 
-## License
+4.  **Salin file `.env.example` menjadi `.env`:**
+    ```bash
+    cp .env.example .env
+    ```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+5.  **Buat Application Key baru:**
+    ```bash
+    php artisan key:generate
+    ```
+
+6.  **Konfigurasi koneksi database Anda di dalam file `.env`**. Pastikan Anda sudah membuat database kosong untuk proyek ini.
+
+7.  **Jalankan migrasi dan seeder:**
+    Perintah ini akan membuat semua tabel di database dan mengisinya dengan data awal (termasuk peran, hak akses, dan user admin default).
+    ```bash
+    php artisan migrate:fresh --seed
+    ```
+
+8.  **Buat symbolic link untuk storage:**
+    Ini penting agar file yang di-upload (seperti gambar barang) bisa diakses dari web.
+    ```bash
+    php artisan storage:link
+    ```
+
+9.  **Install dependensi frontend:**
+    ```bash
+    npm install
+    ```
+
+10. **Jalankan server development:**
+    Buka dua terminal.
+    * Di terminal pertama, jalankan server Laravel:
+        ```bash
+        php artisan serve
+        ```
+    * Di terminal kedua, jalankan Vite untuk kompilasi aset:
+        ```bash
+        npm run dev
+        ```
+
+11. **Selesai!**
+    * Buka aplikasi di `http://localhost:8000`.
+    * Login dengan akun Admin default yang dibuat oleh seeder:
+        * **Email:** `admin@example.com`
+        * **Password:** `password123` (atau sesuai yang Anda atur di `RolesAndPermissionsSeeder.php`)
+    * Anda juga bisa mendaftar sebagai pengguna baru.
