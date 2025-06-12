@@ -14,7 +14,7 @@
 </head>
 <body class="d-flex flex-column min-vh-100">
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm border-bottom">
     <div class="container-fluid"> {{-- container-fluid agar lebih lebar --}}
         <a class="navbar-brand" href="{{ Auth::check() ? route('dashboard') : url('/') }}">{{ config('app.name', 'InventarisApp') }}</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbarNav" aria-controls="mainNavbarNav" aria-expanded="false" aria-label="Toggle navigation">
