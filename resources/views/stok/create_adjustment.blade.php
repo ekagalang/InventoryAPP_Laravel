@@ -11,20 +11,6 @@
                 <a href="{{ route('stok.pergerakan.index') }}" class="btn btn-secondary">Lihat Riwayat Stok</a>
             </div>
 
-            @if (session('info'))
-                <div class="alert alert-info alert-dismissible fade show" role="alert">
-                    {{ session('info') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            @endif
-             @if (session('error'))
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    {{ session('error') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            @endif
-
-
             <div class="card shadow-sm">
                 <div class="card-body">
                     <form action="{{ route('stok.koreksi.store') }}" method="POST">

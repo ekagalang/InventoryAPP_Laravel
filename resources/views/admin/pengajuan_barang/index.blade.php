@@ -9,19 +9,6 @@
         {{-- Tombol aksi lain bisa ditambahkan di sini jika perlu --}}
     </div>
 
-    @if (session('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            {{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
-    @if (session('error'))
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            {{ session('error') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
-
     {{-- TODO: Tambahkan Form Filter di sini jika diperlukan nanti --}}
 
     <div class="card shadow-sm">

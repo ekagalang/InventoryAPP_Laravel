@@ -11,19 +11,6 @@
         @endcan
     </div>
 
-    @if (session('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            {{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
-    @if (session('error'))
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            {{ session('error') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
-
     <div class="card shadow-sm">
         <div class="card-body">
             @if($itemRequests->isEmpty())
@@ -35,18 +22,18 @@
                 </div>
             @else
                 <div class="table-responsive">
-                    <table class="table table-bordered table-hover table-striped">
+                    <table class="table table-bordered table-hover table-striped table-sm align-middle">
                         <thead class="table-light">
                             <tr>
-                                <th>No</th>
-                                <th>Tgl. Pengajuan</th>
-                                <th>Barang Diminta</th>
-                                <th>Kuantitas</th>
-                                <th>Keperluan</th>
-                                <th>Tgl. Dibutuhkan</th>
-                                <th>Status</th>
-                                <th>Catatan Approval</th>
-                                <th>Aksi</th>
+                                <th class="text-center">No</th>
+                                <th class="text-center">Tgl. Pengajuan</th>
+                                <th class="text-center">Barang Diminta</th>
+                                <th class="text-center">Kuantitas</th>
+                                <th class="text-center">Keperluan</th>
+                                <th class="text-center">Tgl. Dibutuhkan</th>
+                                <th class="text-center">Status</th>
+                                <th class="text-center">Catatan Approval</th>
+                                <th class="text-center">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>

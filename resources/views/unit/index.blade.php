@@ -12,30 +12,17 @@
 @endcan
 </div>
 
-@if (session('success'))
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        {{ session('success') }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-@endif
-@if (session('error'))
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        {{ session('error') }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-@endif
-
 <div class="card">
     <div class="card-body">
-        <table class="table table-bordered table-hover table-striped">
+        <table class="table table-bordered table-hover table-striped table-sm align-middle">
             <thead class="table-light">
                 <tr>
-                    <th>No</th>
-                    <th>Nama Unit</th>
-                    <th>Singkatan</th>
-                    <th>Deskripsi</th>
-                    <th>Jumlah Barang Terkait</th>
-                    <th>Aksi</th>
+                    <th class="text-center">No</th>
+                    <th class="text-center">Nama Unit</th>
+                    <th class="text-center">Singkatan</th>
+                    <th class="text-center">Deskripsi</th>
+                    <th class="text-center">Jumlah Barang Terkait</th>
+                    <th class="text-center">Aksi</th>
                 </tr>
             </thead>
             <tbody>

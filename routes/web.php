@@ -15,6 +15,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\Admin\RoleController;
+use App\Http\Controllers\Admin\ActivityLogController;
 
 
 /*
@@ -76,7 +77,8 @@ Route::middleware(['auth', 'verified'])->group(function () { // Menggunakan 'aut
         Route::post('/pengajuan-barang/{itemRequest}/approve', [ItemRequestController::class, 'approve'])->name('pengajuan.barang.approve');
         Route::post('/pengajuan-barang/{itemRequest}/reject', [ItemRequestController::class, 'reject'])->name('pengajuan.barang.reject');
         Route::post('/pengajuan-barang/{itemRequest}/process', [ItemRequestController::class, 'process'])->name('pengajuan.barang.process');
-        Route::put('/pengajuan-barang/{itemRequest}/return', [ItemRequestController::class, 'storeReturn'])->name('pengajuan.barang.return'); // Tambahkan ini jika belum ada
+        Route::put('/pengajuan-barang/{itemRequest}/return', [ItemRequestController::class, 'storeReturn'])->name('pengajuan.barang.return');
+        Route::get('activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');
     });
 
     // === ROUTE UNTUK PENGAJUAN BARANG OLEH PENGGUNA ===
@@ -98,6 +100,12 @@ Route::middleware(['auth', 'verified'])->group(function () { // Menggunakan 'aut
     Route::get('/notifikasi', [NotificationController::class, 'index'])->name('notifikasi.index');
     Route::get('/notifikasi/{id}/baca', [NotificationController::class, 'markAsReadAndRedirect'])->name('notifikasi.markAsReadAndRedirect');
     Route::post('/notifikasi/baca-semua', [NotificationController::class, 'markAllAsRead'])->name('notifikasi.markAllAsRead');
+    
+    // Route::prefix('laporan')->name('laporan.')->group(function () {
+    //     Route::get('/stok-barang', [LaporanController::class, 'stokBarang'])->name('stok.barang');
+    //     Route::get('/stok-barang/export', [LaporanController::class, 'exportStokBarang'])->name('stok.barang.export'); // <-- TAMBAHKAN INI
+        // ... route laporan lainnya ...
+    // });
 
     // Anda bisa menambahkan route lain yang memerlukan login di sini
     // Misalnya, nanti untuk manajemen stok, laporan, dll.

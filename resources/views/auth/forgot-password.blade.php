@@ -16,12 +16,6 @@
                         {{ __('Tidak masalah. Cukup beritahu kami alamat email Anda dan kami akan mengirimkan tautan untuk mengatur ulang password yang memungkinkan Anda memilih yang baru.') }}
                     </div>
 
-                    @if (session('status'))
-                        <div class="alert alert-success mb-3 small">
-                            {{ session('status') }}
-                        </div>
-                    @endif
-
                     <form method="POST" action="{{ route('password.email') }}">
                         @csrf
 

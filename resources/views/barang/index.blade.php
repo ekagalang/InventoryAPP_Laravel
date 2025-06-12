@@ -3,57 +3,54 @@
 @section('title', 'Daftar Barang') {{-- Mengatur judul halaman spesifik --}}
 
 @section('content') {{-- Memulai section konten --}}
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h1>Daftar Barang</h1>
-    @can('barang-create')
-        <a href="{{ route('barang.create') }}" class="btn btn-primary">Tambah Barang Baru</a>
-    @endcan
-</div>
-
-    <div class="card shadow-sm mb-3">
-        <div class="card-body">
-            <form action="{{ route('barang.index') }}" method="GET">
-                <div class="row align-items-end">
-                    <div class="col-md-4">
-                        <label for="tipe_item_filter" class="form-label">Filter Tipe Item</label>
-                        <select name="tipe_item_filter" id="tipe_item_filter" class="form-select">
-                            <option value="">Semua Tipe</option>
-                            <option value="habis_pakai" {{ request('tipe_item_filter') == 'habis_pakai' ? 'selected' : '' }}>Barang Habis Pakai</option>
-                            <option value="aset" {{ request('tipe_item_filter') == 'aset' ? 'selected' : '' }}>Aset (Barang Pinjaman)</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <button type="submit" class="btn btn-primary">Filter</button>
-                        <a href="{{ route('barang.index') }}" class="btn btn-secondary">Reset</a>
-                    </div>
+<div class="card shadow-sm mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Filter Barang</h5>
+        @can('barang-create')
+            <a href="{{ route('barang.create') }}" class="btn btn-primary btn-sm"><i class="bi bi-plus-circle"></i> Tambah Barang Baru</a>
+        @endcan
+    </div>
+    <div class="card-body">
+        <form action="{{ route('barang.index') }}" method="GET" class="row g-3">
+            <div class="col-md-4">
+                <label for="search_filter" class="form-label">Cari (Nama/Kode)</label>
+                <input type="text" class="form-control form-control-sm" id="search_filter" name="search" value="{{ request('search') }}">
+            </div>
+            <div class="col-md-3">
+                <label for="tipe_item_filter" class="form-label">Tipe Item</label>
+                <select name="tipe_item_filter" id="tipe_item_filter" class="form-select form-select-sm">
+                    <option value="">Semua Tipe</option>
+                    <option value="habis_pakai" {{ request('tipe_item_filter') == 'habis_pakai' ? 'selected' : '' }}>Barang Habis Pakai</option>
+                    <option value="aset" {{ request('tipe_item_filter') == 'aset' ? 'selected' : '' }}>Aset (Barang Pinjaman)</option>
+                </select>
+            </div>
+            {{-- Anda bisa tambahkan filter lain di sini (Kategori, Lokasi) --}}
+            <div class="col-md-3 d-flex align-items-end">
+                <div>
+                    <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+                    <a href="{{ route('barang.index') }}" class="btn btn-secondary btn-sm">Reset</a>
                 </div>
-            </form>
-        </div>
+            </div>
+        </form>
     </div>
-
-@if (session('success'))
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        {{ session('success') }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-@endif
+</div>
 
 <div class="card">
     <div class="card-body">
-        <table class="table table-bordered table-hover table-striped">
+        <table class="table table-bordered table-hover table-striped table-sm align-middle">
             <thead class="table-light">
                 <tr>
-                    <th class="text-center align-middle">No</th>
-                    <th class="text-center align-middle">Nama Barang</th>
-                    <th class="text-center align-middle">Tipe Item</th>
-                    <th class="text-center align-middle">Kategori</th>
-                    <th class="text-center align-middle">Unit</th>
-                    <th class="text-center align-middle">Lokasi</th>
-                    <th class="text-center align-middle">Kode</th>
-                    <th class="text-center align-middle">Stok</th>
-                    <th class="text-center align-middle">Stok Min.</th>
-                    <th class="text-center align-middle">Status</th>
-                    <th class="text-center align-middle">Aksi</th>
+                    <th class="text-center">No</th>
+                    <th class="text-center">Nama Barang</th>
+                    <th class="text-center">Tipe Item</th>
+                    <th class="text-center">Kategori</th>
+                    <th class="text-center">Unit</th>
+                    <th class="text-center">Lokasi</th>
+                    <th class="text-center">Kode</th>
+                    <th class="text-center">Stok</th>
+                    <th class="text-center">Stok Min.</th>
+                    <th class="text-center">Status</th>
+                    <th class="text-center">Aksi</th>
                 </tr>
             </thead>
             <tbody>

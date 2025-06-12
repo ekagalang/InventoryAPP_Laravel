@@ -35,6 +35,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'user-list', 'user-create', 'user-edit', 'user-delete',
             // Manajemen Role & Permission (Nanti, hanya untuk super admin)
             'role-permission-manage',
+            'view-audit-trail',
 
             // Pengajuan Barang
             'pengajuan-barang-list-own',    // Melihat daftar pengajuan milik sendiri

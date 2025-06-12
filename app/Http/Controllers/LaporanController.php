@@ -9,6 +9,8 @@ use App\Models\StockMovement; // Import StockMovement
 use App\Models\User;        // Import User untuk filter pencatat
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Maatwebsite\Excel\Facades\Excel; // <-- IMPORT FACADE EXCEL
+// use App\Exports\BarangStokExport;
 
 class LaporanController extends Controller
 {
@@ -153,6 +155,18 @@ class LaporanController extends Controller
             'filterTanggalMulai',
             'filterTanggalAkhir'
         ));
+    }
+
+    public function exportStokBarang(Request $request)
+    {
+        if (!Auth::user()->hasPermissionTo('view-laporan-stok')) { // Gunakan permission yang sama
+            abort(403, 'AKSES DITOLAK.');
+        }
+
+        $timestamp = now()->format('Y-m-d_H-i-s');
+        $fileName = 'laporan-stok-barang-' . $timestamp . '.xlsx';
+
+        return Excel::download(new BarangStokExport($request), $fileName);
     }
 
     // Method untuk laporan lain akan ditambahkan di sini

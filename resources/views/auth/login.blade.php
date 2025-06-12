@@ -12,12 +12,6 @@
                 </div>
 
                 <div class="card-body p-4">
-                    @if (session('status'))
-                        <div class="alert alert-success mb-3 small">
-                            {{ session('status') }}
-                        </div>
-                    @endif
-
                     <form method="POST" action="{{ route('login') }}">
                         @csrf
 

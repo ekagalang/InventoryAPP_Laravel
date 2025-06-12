@@ -45,7 +45,8 @@
                 </div>
                 <div class="col-md-3 d-flex align-items-end">
                     <button type="submit" class="btn btn-primary btn-sm me-2">Filter</button>
-                    <a href="{{ route('laporan.stok.barang') }}" class="btn btn-secondary btn-sm">Reset</a>
+                    <a href="{{ route('laporan.stok.barang') }}" class="btn btn-secondary btn-sm me-2">Reset</a>
+                    {{-- <a href="{{ route('laporan.stok.barang.export', request()->query()) }}" class="btn btn-success btn-sm"><i class="bi bi-file-earmark-excel"></i> Ekspor</a> --}}
                 </div>
             </form>
         </div>

@@ -5,10 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
 
 class Barang extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
 
     protected $fillable = [
         'nama_barang',
@@ -52,6 +54,15 @@ class Barang extends Model
     public function itemRequests(): HasMany
     {
         return $this->hasMany(ItemRequest::class, 'barang_id');
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['nama_barang', 'tipe_item', 'kategori_id', 'stok', 'stok_minimum', 'harga_beli', 'status']) // Catat hanya perubahan pada kolom-kolom ini
+            ->logOnlyDirty() // Hanya catat jika ada perubahan (saat update)
+            ->setDescriptionForEvent(fn(string $eventName) => "Data barang '{$this->nama_barang}' telah di-{$eventName}")
+            ->useLogName('Barang'); // Nama log untuk memfilter
     }
 
     // Relasi akan ditambahkan di sini nanti

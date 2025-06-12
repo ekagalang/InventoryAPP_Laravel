@@ -139,6 +139,10 @@
                             <li><a class="dropdown-item {{ request()->routeIs('admin.roles.*') ? 'active' : '' }}" href="{{ route('admin.roles.index') }}">Manajemen Peran</a></li>
                             <li><a class="dropdown-item {{ request()->routeIs('admin.permissions.*') ? 'active' : '' }}" href="{{ route('admin.permissions.index') }}">Manajemen Hak Akses</a></li>
                             @endcan
+                            @can('view-audit-trail')
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item {{ request()->routeIs('admin.activity-logs.index') ? 'active' : '' }}" href="{{ route('admin.activity-logs.index') }}">Log Aktivitas</a></li>
+                            @endcan
                         </ul>
                     </li>
                     @endcanany
@@ -239,32 +243,8 @@
 </nav>
 
 <main class="flex-shrink-0 py-4">
-    <div class="container-fluid px-md-4">
-        {{-- Global Flash Messages & Validation Errors --}}
-        @if(session('success'))
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                {{ session('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        @endif
-        @if(session('error'))
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                {{ session('error') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        @endif
-        @if ($errors->any())
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <h5 class="alert-heading"><i class="bi bi-exclamation-triangle-fill"></i> Terjadi Kesalahan Validasi!</h5>
-                <ul class="mb-0 ps-3">
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        @endif
-        
+    <div class="container-fluid px-md-4">        
+        @include('layouts.partials.alerts')
         @yield('content')
     </div>
 </main>
@@ -276,5 +256,6 @@
 </footer>
 
 @stack('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </body>
 </html>
