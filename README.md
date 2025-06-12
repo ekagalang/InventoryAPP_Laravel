@@ -5,7 +5,6 @@ Aplikasi Inventaris ini adalah sebuah sistem berbasis web yang dibangun mengguna
 Aplikasi ini mencakup berbagai fitur inti yang menjadikannya solusi solid untuk manajemen inventaris, mulai dari pengelolaan data master hingga laporan, notifikasi otomatis, dan audit trail.
 
 ![Dashboard Aplikasi Inventaris](https://drive.google.com/uc?export=view&id=1GT4uZTDfMCGzqdNBPvPu1RVOCWe2nuaq)
-*(Ganti URL di atas dengan screenshot dashboard aplikasi Anda untuk tampilan yang lebih menarik)*
 
 ---
 
