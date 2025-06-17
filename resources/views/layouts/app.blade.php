@@ -82,12 +82,15 @@
                                     <li><hr class="dropdown-divider"></li>
                                     <li><a class="dropdown-item {{ request()->routeIs('admin.pengajuan.barang.index') || request()->routeIs('admin.pengajuan.barang.show') ? 'active' : '' }}" href="{{ route('admin.pengajuan.barang.index') }}">Kelola Pengajuan Barang</a></li>
                                 @endcan
+                                @can('maintenance-manage')
+                                    <li><a class="dropdown-item {{ request()->routeIs('admin.maintenances.*') ? 'active' : '' }}" href="{{ route('admin.maintenances.index') }}">Jadwal Maintenance</a></li>
+                                @endcan
                             </ul>
                         </li>
                     @endhasanyrole
                     
                     {{-- Menu Pengajuan Barang untuk User Biasa (jika tidak di bawah Stok) --}}
-                    @canany(['pengajuan-barang-create', 'pengajuan-barang-list-own'])
+                    @canany(['pengajuan-barang-create', 'pengajuan-barang-list-own',])
                         @unless (Auth::user()->hasPermissionTo('pengajuan-barang-list-all')) {{-- Hindari duplikasi jika sudah ada di 'Kelola Semua Pengajuan' --}}
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle {{ request()->is('pengajuan-barang*') ? 'active' : '' }}" href="#" id="navbarDropdownUserPengajuan" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -120,6 +123,9 @@
                             @endcan
                             @can('view-laporan-barang-keluar')
                             <li><a class="dropdown-item {{ request()->routeIs('laporan.barang.keluar') ? 'active' : '' }}" href="{{ route('laporan.barang.keluar') }}">Laporan Barang Keluar</a></li>
+                            @endcan
+                            @can('view-laporan-maintenance')
+                            <li><a class="dropdown-item {{ request()->routeIs('laporan.maintenance') ? 'active' : '' }}" href="{{ route('laporan.maintenance') }}">Laporan Maintenance</a></li>
                             @endcan
                         </ul>
                     </li>

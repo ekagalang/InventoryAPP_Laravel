@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\StockMovement;
 use App\Observers\StockMovementObserver;
 use Illuminate\Pagination\Paginator;
+use App\Models\Maintenance;
+use App\Observers\MaintenanceObserver;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -41,6 +43,7 @@ class AppServiceProvider extends ServiceProvider
         });
 
         StockMovement::observe(StockMovementObserver::class);
+        Maintenance::observe(MaintenanceObserver::class);
         // === AKHIR VIEW COMPOSER ===
     }
 }

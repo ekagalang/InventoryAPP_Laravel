@@ -36,6 +36,7 @@ class RolesAndPermissionsSeeder extends Seeder
             // Manajemen Role & Permission (Nanti, hanya untuk super admin)
             'role-permission-manage',
             'view-audit-trail',
+            'maintenance-manage',
 
             // Pengajuan Barang
             'pengajuan-barang-list-own',    // Melihat daftar pengajuan milik sendiri
@@ -60,6 +61,7 @@ class RolesAndPermissionsSeeder extends Seeder
 
             'view-laporan-barang-masuk',   // TAMBAHKAN INI
             'view-laporan-barang-keluar',
+            'view-laporan-maintenance',
             'stok-koreksi',
         ];
 
@@ -95,7 +97,9 @@ class RolesAndPermissionsSeeder extends Seeder
             'view-laporan-stok', // TAMBAHKAN INI
             'view-laporan-barang-masuk', // TAMBAHKAN INI
             'view-laporan-barang-keluar', // TAMBAHKAN INI
+            'view-laporan-maintenance',
             'stok-koreksi',
+            'maintenance-manage',
         ]);
         $this->command->info('StafGudang role created and given specific permissions.');
         

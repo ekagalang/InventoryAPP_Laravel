@@ -10,6 +10,7 @@ use App\Models\User;        // Import User untuk filter pencatat
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Facades\Excel; // <-- IMPORT FACADE EXCEL
+use App\Models\Maintenance;
 // use App\Exports\BarangStokExport;
 
 class LaporanController extends Controller
@@ -167,6 +168,52 @@ class LaporanController extends Controller
         $fileName = 'laporan-stok-barang-' . $timestamp . '.xlsx';
 
         return Excel::download(new BarangStokExport($request), $fileName);
+    }
+
+    public function maintenance(Request $request)
+    {
+        if (!Auth::user()->hasPermissionTo('view-laporan-maintenance')) {
+            abort(403, 'AKSES DITOLAK.');
+        }
+
+        $filterBarangId = $request->input('barang_id');
+        $filterStatus = $request->input('status');
+        $filterTanggalMulai = $request->input('tanggal_mulai');
+        $filterTanggalAkhir = $request->input('tanggal_akhir');
+
+        $query = Maintenance::with(['barang', 'pencatat'])->latest();
+
+        // Terapkan filter
+        if ($filterBarangId) {
+            $query->where('barang_id', $filterBarangId);
+        }
+        if ($filterStatus) {
+            $query->where('status', $filterStatus);
+        }
+        if ($filterTanggalMulai) {
+            $query->whereDate('tanggal_maintenance', '>=', $filterTanggalMulai);
+        }
+        if ($filterTanggalAkhir) {
+            $query->whereDate('tanggal_maintenance', '<=', $filterTanggalAkhir);
+        }
+
+        // Hitung total biaya HANYA dari hasil yang terfilter
+        $totalBiaya = $query->sum('biaya');
+
+        $maintenances = $query->paginate(15)->appends($request->query());
+
+        // Data untuk dropdown filter
+        $barangs = Barang::orderBy('nama_barang', 'asc')->get();
+
+        return view('laporan.maintenance', compact(
+            'maintenances',
+            'barangs',
+            'totalBiaya', // Kirim total biaya ke view
+            'filterBarangId',
+            'filterStatus',
+            'filterTanggalMulai',
+            'filterTanggalAkhir'
+        ));
     }
 
     // Method untuk laporan lain akan ditambahkan di sini

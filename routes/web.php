@@ -16,6 +16,7 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\ActivityLogController;
+use App\Http\Controllers\Admin\MaintenanceController;
 
 
 /*
@@ -70,6 +71,7 @@ Route::middleware(['auth', 'verified'])->group(function () { // Menggunakan 'aut
         Route::resource('roles', RoleController::class);
         // Permission CRUD routes juga akan ada di sini nanti
         Route::resource('permissions', PermissionController::class);
+        Route::resource('maintenances', MaintenanceController::class);
 
         // === PINDAHKAN SEMUA ROUTE MANAJEMEN PENGAJUAN KE DALAM GRUP INI ===
         Route::get('/pengajuan-barang', [ItemRequestController::class, 'adminIndex'])->name('pengajuan.barang.index');
@@ -95,6 +97,7 @@ Route::middleware(['auth', 'verified'])->group(function () { // Menggunakan 'aut
         Route::get('/stok-barang', [LaporanController::class, 'stokBarang'])->name('stok.barang');
         Route::get('/barang-masuk', [LaporanController::class, 'barangMasuk'])->name('barang.masuk');
         Route::get('/barang-keluar', [LaporanController::class, 'barangKeluar'])->name('barang.keluar');
+        Route::get('/maintenance', [LaporanController::class, 'maintenance'])->name('maintenance');
     });
 
     Route::get('/notifikasi', [NotificationController::class, 'index'])->name('notifikasi.index');

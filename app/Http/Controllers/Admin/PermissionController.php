@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use Spatie\Permission\Models\Permission; // Import model Permission
+use Spatie\Permission\Models\Permission;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
@@ -124,27 +124,19 @@ class PermissionController extends Controller
         return redirect()->route('admin.permissions.index')->with('success', 'Permission berhasil diperbarui.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Permission $permission)
     {
         if (!Auth::user()->hasPermissionTo('role-permission-manage')) { // Atau permission 'permission-delete'
             abort(403, 'AKSES DITOLAK: Anda tidak memiliki izin untuk menghapus hak akses.');
         }
 
-        // PENTING: Menghapus permission akan otomatis mencabutnya dari semua peran yang memilikinya.
-        // Pertimbangkan untuk memberikan peringatan yang sangat jelas atau bahkan mencegah penghapusan
-        // permission yang masih aktif digunakan oleh peran-peran penting.
 
-        // Contoh: Cek apakah permission ini masih digunakan oleh role mana pun
         if ($permission->roles()->count() > 0) {
             $rolesUsingPermission = $permission->roles()->pluck('name')->implode(', ');
             return redirect()->route('admin.permissions.index')
                             ->with('error', 'Permission "'.$permission->name.'" tidak dapat dihapus karena masih digunakan oleh peran: ' . $rolesUsingPermission . '. Harap lepaskan permission ini dari peran tersebut terlebih dahulu.');
         }
 
-        // (Opsional) Tambahan pengecekan untuk permission krusial yang tidak boleh dihapus, misal 'role-permission-manage'
         $criticalPermissions = ['role-permission-manage', 'user-list', 'user-create', 'user-edit', 'user-delete']; // Sesuaikan daftarnya
         if (in_array($permission->name, $criticalPermissions)) {
             return redirect()->route('admin.permissions.index')->with('error', 'Permission default/krusial "'.$permission->name.'" tidak dapat dihapus.');

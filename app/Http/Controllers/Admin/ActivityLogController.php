@@ -11,7 +11,6 @@ class ActivityLogController extends Controller
 {
     public function index()
     {
-        // Kita akan buat permission ini nanti
         if (!Auth::user()->hasPermissionTo('view-audit-trail')) {
             abort(403, 'AKSES DITOLAK.');
         }
