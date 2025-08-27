@@ -72,7 +72,6 @@ class MaintenanceController extends Controller
         }
         
         Maintenance::create($data);
-        Maintenance::create($request->all() + ['user_id' => Auth::id()]);
 
         return redirect()->route('admin.maintenances.index')->with('success', 'Jadwal maintenance berhasil ditambahkan.');
     }
@@ -114,7 +113,6 @@ class MaintenanceController extends Controller
         }
 
         $maintenance->update($data);
-        $maintenance->update($request->all());
 
         return redirect()->route('admin.maintenances.index')->with('success', 'Jadwal maintenance berhasil diperbarui.');
     }

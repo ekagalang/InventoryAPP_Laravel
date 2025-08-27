@@ -53,6 +53,27 @@
     </div>
     {{-- AKHIR FORM FILTER --}}
 
+    {{-- GRAFIK STOK --}}
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Distribusi Stok per Kategori</h5>
+                    <canvas id="chartStokKategori" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Distribusi Stok per Lokasi</h5>
+                    <canvas id="chartStokLokasi" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    {{-- AKHIR GRAFIK STOK --}}
+
     <div class="card shadow-sm">
         <div class="card-body">
             @if($barangs->isEmpty())
@@ -107,4 +128,77 @@
         @endif
     </div>
 </div>
+
+@push('styles')
+<style>
+    .chart-container {
+        position: relative;
+        height: 300px;
+        width: 100%;
+    }
+</style>
+@endpush
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Grafik Stok per Kategori
+    const ctxKategori = document.getElementById('chartStokKategori').getContext('2d');
+    const chartStokKategori = new Chart(ctxKategori, {
+        type: 'doughnut',
+        data: {
+            labels: {!! json_encode($stokPerKategori->pluck('nama_kategori')) !!},
+            datasets: [{
+                label: 'Stok',
+                data: {!! json_encode($stokPerKategori->pluck('total_stok')) !!},
+                backgroundColor: [
+                    '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40',
+                    '#FF6384', '#C9CBCF', '#4BC0C0', '#FF6384', '#36A2EB', '#FFCE56'
+                ],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+
+    // Grafik Stok per Lokasi
+    const ctxLokasi = document.getElementById('chartStokLokasi').getContext('2d');
+    const chartStokLokasi = new Chart(ctxLokasi, {
+        type: 'bar',
+        data: {
+            labels: {!! json_encode($stokPerLokasi->pluck('nama_lokasi')) !!},
+            datasets: [{
+                label: 'Total Stok',
+                data: {!! json_encode($stokPerLokasi->pluck('total_stok')) !!},
+                backgroundColor: 'rgba(54, 162, 235, 0.8)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+});
+</script>
+@endpush
 @endsection

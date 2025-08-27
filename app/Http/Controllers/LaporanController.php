@@ -49,13 +49,27 @@ class LaporanController extends Controller
         $kategoris = Kategori::orderBy('nama_kategori', 'asc')->get();
         $lokasis = Lokasi::orderBy('nama_lokasi', 'asc')->get();
 
+        // Data untuk grafik stok berdasarkan kategori
+        $stokPerKategori = Barang::join('kategoris', 'barangs.kategori_id', '=', 'kategoris.id')
+            ->selectRaw('kategoris.nama_kategori, SUM(barangs.stok) as total_stok')
+            ->groupBy('kategoris.id', 'kategoris.nama_kategori')
+            ->get();
+
+        // Data untuk grafik stok berdasarkan lokasi
+        $stokPerLokasi = Barang::join('lokasis', 'barangs.lokasi_id', '=', 'lokasis.id')
+            ->selectRaw('lokasis.nama_lokasi, SUM(barangs.stok) as total_stok')
+            ->groupBy('lokasis.id', 'lokasis.nama_lokasi')
+            ->get();
+
         return view('laporan.stok_barang', compact(
             'barangs',
             'kategoris',
             'lokasis',
             'filterKategoriId',
             'filterLokasiId',
-            'searchTerm'
+            'searchTerm',
+            'stokPerKategori',
+            'stokPerLokasi'
         ));
     }
 
@@ -97,6 +111,14 @@ class LaporanController extends Controller
         $barangs = Barang::orderBy('nama_barang', 'asc')->get();
         $users = User::orderBy('name', 'asc')->get(); // Ambil semua user untuk filter pencatat
 
+        // Data untuk grafik barang masuk per bulan (6 bulan terakhir)
+        $barangMasukPerBulan = StockMovement::where('tipe_pergerakan', 'masuk')
+            ->whereDate('tanggal_pergerakan', '>=', now()->subMonths(6))
+            ->selectRaw('YEAR(tanggal_pergerakan) as tahun, MONTH(tanggal_pergerakan) as bulan, SUM(jumlah) as total_masuk')
+            ->groupByRaw('YEAR(tanggal_pergerakan), MONTH(tanggal_pergerakan)')
+            ->orderByRaw('YEAR(tanggal_pergerakan), MONTH(tanggal_pergerakan)')
+            ->get();
+
         return view('laporan.barang_masuk', compact(
             'barangMasuk',
             'barangs',
@@ -104,7 +126,8 @@ class LaporanController extends Controller
             'filterBarangId',
             'filterUserId',
             'filterTanggalMulai',
-            'filterTanggalAkhir'
+            'filterTanggalAkhir',
+            'barangMasukPerBulan'
         ));
     }
 
@@ -147,6 +170,14 @@ class LaporanController extends Controller
         $barangs = Barang::orderBy('nama_barang', 'asc')->get();
         $users = User::orderBy('name', 'asc')->get(); // Ambil semua user untuk filter pencatat/pemroses
 
+        // Data untuk grafik barang keluar per bulan (6 bulan terakhir)
+        $barangKeluarPerBulan = StockMovement::where('tipe_pergerakan', 'keluar')
+            ->whereDate('tanggal_pergerakan', '>=', now()->subMonths(6))
+            ->selectRaw('YEAR(tanggal_pergerakan) as tahun, MONTH(tanggal_pergerakan) as bulan, SUM(jumlah) as total_keluar')
+            ->groupByRaw('YEAR(tanggal_pergerakan), MONTH(tanggal_pergerakan)')
+            ->orderByRaw('YEAR(tanggal_pergerakan), MONTH(tanggal_pergerakan)')
+            ->get();
+
         return view('laporan.barang_keluar', compact(
             'barangKeluar',
             'barangs',
@@ -154,7 +185,8 @@ class LaporanController extends Controller
             'filterBarangId',
             'filterUserId',
             'filterTanggalMulai',
-            'filterTanggalAkhir'
+            'filterTanggalAkhir',
+            'barangKeluarPerBulan'
         ));
     }
 
@@ -205,6 +237,18 @@ class LaporanController extends Controller
         // Data untuk dropdown filter
         $barangs = Barang::orderBy('nama_barang', 'asc')->get();
 
+        // Data untuk grafik maintenance berdasarkan status
+        $maintenancePerStatus = Maintenance::selectRaw('status, COUNT(*) as jumlah')
+            ->groupBy('status')
+            ->get();
+
+        // Data untuk grafik biaya maintenance per bulan (6 bulan terakhir)
+        $biayaMaintenancePerBulan = Maintenance::whereDate('tanggal_maintenance', '>=', now()->subMonths(6))
+            ->selectRaw('YEAR(tanggal_maintenance) as tahun, MONTH(tanggal_maintenance) as bulan, SUM(biaya) as total_biaya')
+            ->groupByRaw('YEAR(tanggal_maintenance), MONTH(tanggal_maintenance)')
+            ->orderByRaw('YEAR(tanggal_maintenance), MONTH(tanggal_maintenance)')
+            ->get();
+
         return view('laporan.maintenance', compact(
             'maintenances',
             'barangs',
@@ -212,7 +256,9 @@ class LaporanController extends Controller
             'filterBarangId',
             'filterStatus',
             'filterTanggalMulai',
-            'filterTanggalAkhir'
+            'filterTanggalAkhir',
+            'maintenancePerStatus',
+            'biayaMaintenancePerBulan'
         ));
     }
 

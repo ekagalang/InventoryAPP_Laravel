@@ -52,6 +52,19 @@
     </div>
     {{-- AKHIR FORM FILTER --}}
 
+    {{-- GRAFIK BARANG MASUK --}}
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Tren Barang Masuk (6 Bulan Terakhir)</h5>
+                    <canvas id="chartBarangMasuk" width="400" height="150"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    {{-- AKHIR GRAFIK BARANG MASUK --}}
+
     <div class="card shadow-sm">
         <div class="card-body">
             @if($barangMasuk->isEmpty())
@@ -108,4 +121,52 @@
         @endif
     </div>
 </div>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Grafik Barang Masuk per Bulan
+    const ctx = document.getElementById('chartBarangMasuk').getContext('2d');
+    
+    // Prepare data untuk grafik
+    const chartData = @json($barangMasukPerBulan);
+    const labels = chartData.map(item => {
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+        return monthNames[item.bulan - 1] + ' ' + item.tahun;
+    });
+    const data = chartData.map(item => item.total_masuk);
+
+    const chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Total Barang Masuk',
+                data: data,
+                borderColor: 'rgba(75, 192, 192, 1)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                }
+            }
+        }
+    });
+});
+</script>
+@endpush
 @endsection

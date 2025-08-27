@@ -57,6 +57,27 @@
         </div>
     </div>
 
+    {{-- GRAFIK MAINTENANCE --}}
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Status Maintenance</h5>
+                    <canvas id="chartMaintenanceStatus" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Biaya Maintenance per Bulan</h5>
+                    <canvas id="chartBiayaMaintenance" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    {{-- AKHIR GRAFIK MAINTENANCE --}}
+
     {{-- Tabel Data --}}
     <div class="card shadow-sm">
         <div class="card-header d-flex justify-content-between">
@@ -113,4 +134,90 @@
         @endif
     </div>
 </div>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Grafik Status Maintenance
+    const ctxStatus = document.getElementById('chartMaintenanceStatus').getContext('2d');
+    const statusData = @json($maintenancePerStatus);
+    
+    const chartStatus = new Chart(ctxStatus, {
+        type: 'pie',
+        data: {
+            labels: statusData.map(item => item.status),
+            datasets: [{
+                label: 'Jumlah',
+                data: statusData.map(item => item.jumlah),
+                backgroundColor: [
+                    '#28a745', // Selesai - hijau
+                    '#ffc107', // Dijadwalkan - kuning
+                    '#6c757d'  // Dibatalkan - abu
+                ],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+
+    // Grafik Biaya Maintenance per Bulan
+    const ctxBiaya = document.getElementById('chartBiayaMaintenance').getContext('2d');
+    const biayaData = @json($biayaMaintenancePerBulan);
+    
+    const labels = biayaData.map(item => {
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+        return monthNames[item.bulan - 1] + ' ' + item.tahun;
+    });
+    const data = biayaData.map(item => item.total_biaya);
+
+    const chartBiaya = new Chart(ctxBiaya, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Total Biaya (Rp)',
+                data: data,
+                backgroundColor: 'rgba(255, 159, 64, 0.8)',
+                borderColor: 'rgba(255, 159, 64, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return 'Rp ' + new Intl.NumberFormat('id-ID').format(value);
+                        }
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return 'Total Biaya: Rp ' + new Intl.NumberFormat('id-ID').format(context.parsed.y);
+                        }
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+@endpush
 @endsection
