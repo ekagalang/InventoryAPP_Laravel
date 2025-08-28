@@ -59,7 +59,9 @@
             <div class="card shadow-sm">
                 <div class="card-body">
                     <h5 class="card-title">Distribusi Stok per Kategori</h5>
-                    <canvas id="chartStokKategori" width="400" height="200"></canvas>
+                    <div class="chart-container">
+                        <canvas id="chartStokKategori"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
@@ -67,7 +69,9 @@
             <div class="card shadow-sm">
                 <div class="card-body">
                     <h5 class="card-title">Distribusi Stok per Lokasi</h5>
-                    <canvas id="chartStokLokasi" width="400" height="200"></canvas>
+                    <div class="chart-container">
+                        <canvas id="chartStokLokasi"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
@@ -135,6 +139,8 @@
         position: relative;
         height: 300px;
         width: 100%;
+        max-height: 300px;
+        overflow: hidden;
     }
 </style>
 @endpush
@@ -163,7 +169,13 @@ document.addEventListener('DOMContentLoaded', function() {
             maintainAspectRatio: false,
             plugins: {
                 legend: {
-                    position: 'bottom'
+                    position: 'bottom',
+                    labels: {
+                        boxWidth: 12,
+                        font: {
+                            size: 11
+                        }
+                    }
                 }
             }
         }
@@ -188,7 +200,20 @@ document.addEventListener('DOMContentLoaded', function() {
             maintainAspectRatio: false,
             scales: {
                 y: {
-                    beginAtZero: true
+                    beginAtZero: true,
+                    ticks: {
+                        font: {
+                            size: 11
+                        }
+                    }
+                },
+                x: {
+                    ticks: {
+                        font: {
+                            size: 11
+                        },
+                        maxRotation: 45
+                    }
                 }
             },
             plugins: {

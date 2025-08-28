@@ -58,7 +58,9 @@
             <div class="card shadow-sm">
                 <div class="card-body">
                     <h5 class="card-title">Tren Barang Masuk (6 Bulan Terakhir)</h5>
-                    <canvas id="chartBarangMasuk" width="400" height="150"></canvas>
+                    <div class="chart-container" style="height: 250px;">
+                        <canvas id="chartBarangMasuk"></canvas>
+                    </div>
                 </div>
             </div>
         </div>

@@ -63,7 +63,9 @@
             <div class="card shadow-sm">
                 <div class="card-body">
                     <h5 class="card-title">Status Maintenance</h5>
-                    <canvas id="chartMaintenanceStatus" width="400" height="200"></canvas>
+                    <div class="chart-container" style="height: 250px;">
+                        <canvas id="chartMaintenanceStatus"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
@@ -71,7 +73,9 @@
             <div class="card shadow-sm">
                 <div class="card-body">
                     <h5 class="card-title">Biaya Maintenance per Bulan</h5>
-                    <canvas id="chartBiayaMaintenance" width="400" height="200"></canvas>
+                    <div class="chart-container" style="height: 250px;">
+                        <canvas id="chartBiayaMaintenance"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
