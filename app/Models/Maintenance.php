@@ -20,6 +20,8 @@ class Maintenance extends Model
         'is_recurring',
         'recurrence_interval',
         'recurrence_unit',
+        'max_occurrences',
+        'recurring_end_date',
         'user_id',
     ];
 
@@ -34,4 +36,19 @@ class Maintenance extends Model
     {
         return $this->belongsTo(Barang::class, 'barang_id');
     }
+    
+    // Relasi ke jadwal maintenance
+    public function schedules()
+    {
+        return $this->hasMany(MaintenanceSchedule::class);
+    }
+    
+    protected $casts = [
+        'tanggal_maintenance' => 'date',
+        'recurring_end_date' => 'date',
+        'is_recurring' => 'boolean',
+        'biaya' => 'decimal:2',
+        'recurrence_interval' => 'integer',
+        'max_occurrences' => 'integer',
+    ];
 }

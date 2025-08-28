@@ -1,53 +1,166 @@
-@extends('layouts.app') {{-- Memberitahu Blade untuk menggunakan layouts/app.blade.php --}}
+@extends('layouts.app')
 
-@section('title', 'Daftar Barang') {{-- Mengatur judul halaman spesifik --}}
+@section('title', 'Daftar Barang')
 
-@section('content') {{-- Memulai section konten --}}
-<div class="card shadow-sm mb-4">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">Filter Barang</h5>
-        @can('barang-create')
-            <a href="{{ route('barang.create') }}" class="btn btn-primary btn-sm"><i class="bi bi-plus-circle"></i> Tambah Barang Baru</a>
-        @endcan
-    </div>
-    <div class="card-body">
-        <form action="{{ route('barang.index') }}" method="GET" class="row g-3">
-            <div class="col-md-4">
-                <label for="search_filter" class="form-label">Cari (Nama/Kode)</label>
-                <input type="text" class="form-control form-control-sm" id="search_filter" name="search" value="{{ request('search') }}">
+@section('content')
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Daftar Barang</h1>
+    @can('barang-create')
+        <a href="{{ route('barang.create') }}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Tambah Barang
+        </a>
+    @endcan
+</div>
+
+{{-- Advanced Search Component --}}
+<x-advanced-search 
+    :action="route('barang.index')" 
+    :fields="[
+        [
+            'name' => 'search',
+            'type' => 'search',
+            'label' => 'Search',
+            'placeholder' => 'Cari nama barang, kode, atau deskripsi...',
+            'width' => 4
+        ],
+        [
+            'name' => 'kategori_id',
+            'type' => 'select',
+            'label' => 'Kategori',
+            'options' => $kategoris->pluck('nama_kategori', 'id')->toArray(),
+            'width' => 3
+        ],
+        [
+            'name' => 'unit_id',
+            'type' => 'select', 
+            'label' => 'Unit',
+            'options' => $units->pluck('nama_unit', 'id')->toArray(),
+            'width' => 3
+        ],
+        [
+            'name' => 'lokasi_id',
+            'type' => 'select',
+            'label' => 'Lokasi',
+            'options' => $lokasis->pluck('nama_lokasi', 'id')->toArray(),
+            'width' => 2
+        ],
+        [
+            'name' => 'tipe_item',
+            'type' => 'select',
+            'label' => 'Tipe Item',
+            'options' => [
+                'habis_pakai' => 'Habis Pakai',
+                'aset' => 'Aset (Pinjaman)'
+            ],
+            'width' => 3
+        ],
+        [
+            'name' => 'stok_min',
+            'type' => 'number',
+            'label' => 'Stok Min',
+            'placeholder' => 'Min stok',
+            'width' => 2,
+            'min' => 0
+        ],
+        [
+            'name' => 'stok_max', 
+            'type' => 'number',
+            'label' => 'Stok Max',
+            'placeholder' => 'Max stok',
+            'width' => 2,
+            'min' => 0
+        ],
+        [
+            'name' => 'low_stock_only',
+            'type' => 'select',
+            'label' => 'Stok Rendah',
+            'options' => [1 => 'Hanya Stok Rendah'],
+            'width' => 2
+        ]
+    ]"
+    :currentFilters="$currentFilters"
+/>
+
+{{-- Bulk Operations Toolbar --}}
+<div class="card mb-3" id="bulkOperationsCard" style="display: none;">
+    <div class="card-body py-2">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <span id="selectedCount">0</span> item(s) selected
             </div>
-            <div class="col-md-3">
-                <label for="tipe_item_filter" class="form-label">Tipe Item</label>
-                <select name="tipe_item_filter" id="tipe_item_filter" class="form-select form-select-sm">
-                    <option value="">Semua Tipe</option>
-                    <option value="habis_pakai" {{ request('tipe_item_filter') == 'habis_pakai' ? 'selected' : '' }}>Barang Habis Pakai</option>
-                    <option value="aset" {{ request('tipe_item_filter') == 'aset' ? 'selected' : '' }}>Aset (Barang Pinjaman)</option>
-                </select>
+            <div class="btn-group" role="group">
+                @can('barang-delete')
+                    <button type="button" class="btn btn-danger btn-sm" onclick="bulkDelete()">
+                        <i class="bi bi-trash"></i> Delete Selected
+                    </button>
+                @endcan
+                <button type="button" class="btn btn-warning btn-sm" onclick="bulkUpdateCategory()">
+                    <i class="bi bi-pencil"></i> Update Category
+                </button>
+                <button type="button" class="btn btn-info btn-sm" onclick="bulkUpdateLocation()">
+                    <i class="bi bi-geo-alt"></i> Update Location
+                </button>
+                <button type="button" class="btn btn-success btn-sm" onclick="bulkExport()">
+                    <i class="bi bi-download"></i> Export Selected
+                </button>
             </div>
-            {{-- Anda bisa tambahkan filter lain di sini (Kategori, Lokasi) --}}
-            <div class="col-md-3 d-flex align-items-end">
-                <div>
-                    <button type="submit" class="btn btn-primary btn-sm">Filter</button>
-                    <a href="{{ route('barang.index') }}" class="btn btn-secondary btn-sm">Reset</a>
-                </div>
-            </div>
-        </form>
+        </div>
     </div>
 </div>
 
+{{-- Results Table --}}
 <div class="card">
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h6 class="mb-0">
+                Total: {{ $barangs->total() }} barang
+                @if($currentFilters)
+                    (filtered)
+                @endif
+            </h6>
+            <div>
+                <small class="text-muted">
+                    Showing {{ $barangs->firstItem() ?? 0 }} to {{ $barangs->lastItem() ?? 0 }} of {{ $barangs->total() }}
+                </small>
+            </div>
+        </div>
+    </div>
     <div class="card-body">
         <table class="table table-bordered table-hover table-striped table-sm align-middle">
             <thead class="table-light">
                 <tr>
+                    <th class="text-center">
+                        <input type="checkbox" id="selectAll" class="form-check-input">
+                    </th>
                     <th class="text-center">No</th>
-                    <th class="text-center">Nama Barang</th>
+                    <th class="text-center">
+                        <a href="{{ request()->fullUrlWithQuery(['sort' => 'nama_barang', 'direction' => request('sort') == 'nama_barang' && request('direction') == 'asc' ? 'desc' : 'asc']) }}" class="text-decoration-none text-dark">
+                            Nama Barang
+                            @if(request('sort') == 'nama_barang')
+                                <i class="bi bi-chevron-{{ request('direction') == 'asc' ? 'up' : 'down' }}"></i>
+                            @endif
+                        </a>
+                    </th>
                     <th class="text-center">Tipe Item</th>
                     <th class="text-center">Kategori</th>
                     <th class="text-center">Unit</th>
                     <th class="text-center">Lokasi</th>
-                    <th class="text-center">Kode</th>
-                    <th class="text-center">Stok</th>
+                    <th class="text-center">
+                        <a href="{{ request()->fullUrlWithQuery(['sort' => 'kode_barang', 'direction' => request('sort') == 'kode_barang' && request('direction') == 'asc' ? 'desc' : 'asc']) }}" class="text-decoration-none text-dark">
+                            Kode
+                            @if(request('sort') == 'kode_barang')
+                                <i class="bi bi-chevron-{{ request('direction') == 'asc' ? 'up' : 'down' }}"></i>
+                            @endif
+                        </a>
+                    </th>
+                    <th class="text-center">
+                        <a href="{{ request()->fullUrlWithQuery(['sort' => 'stok', 'direction' => request('sort') == 'stok' && request('direction') == 'asc' ? 'desc' : 'asc']) }}" class="text-decoration-none text-dark">
+                            Stok
+                            @if(request('sort') == 'stok')
+                                <i class="bi bi-chevron-{{ request('direction') == 'asc' ? 'up' : 'down' }}"></i>
+                            @endif
+                        </a>
+                    </th>
                     <th class="text-center">Stok Min.</th>
                     <th class="text-center">Status</th>
                     <th class="text-center">Aksi</th>
@@ -56,6 +169,9 @@
             <tbody>
                 @forelse ($barangs as $key => $barang)
                     <tr>
+                        <td class="text-center align-middle">
+                            <input type="checkbox" class="form-check-input item-checkbox" value="{{ $barang->id }}" data-name="{{ $barang->nama_barang }}">
+                        </td>
                         <td class="text-center align-middle">{{ $barangs->firstItem() + $key }}</td>
                         <td class="text-center align-middle">{{ $barang->nama_barang }}</td> {{-- Biarkan nama barang rata kiri --}}
                         <td>
@@ -100,7 +216,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="text-center align-middle">Tidak ada data barang.</td>
+                        <td colspan="12" class="text-center align-middle">Tidak ada data barang.</td>
                     </tr>
                 @endforelse
             </tbody>
@@ -112,11 +228,229 @@
         </div>
     @endif
 </div>
-@endsection {{-- Mengakhiri section konten --}}
+@endsection
 
-{{-- @push('scripts')
-    <script>
-        // Tambahkan script JS spesifik untuk halaman ini jika perlu
-        // console.log('Script untuk halaman index barang.');
-    </script>
-@endpush --}}
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const selectAllCheckbox = document.getElementById('selectAll');
+    const itemCheckboxes = document.querySelectorAll('.item-checkbox');
+    const bulkOperationsCard = document.getElementById('bulkOperationsCard');
+    const selectedCountSpan = document.getElementById('selectedCount');
+
+    // Select All functionality
+    selectAllCheckbox.addEventListener('change', function() {
+        itemCheckboxes.forEach(checkbox => {
+            checkbox.checked = this.checked;
+        });
+        updateBulkOperationsVisibility();
+    });
+
+    // Individual checkbox functionality
+    itemCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            updateSelectAllCheckbox();
+            updateBulkOperationsVisibility();
+        });
+    });
+
+    function updateSelectAllCheckbox() {
+        const checkedItems = document.querySelectorAll('.item-checkbox:checked');
+        selectAllCheckbox.checked = checkedItems.length === itemCheckboxes.length;
+        selectAllCheckbox.indeterminate = checkedItems.length > 0 && checkedItems.length < itemCheckboxes.length;
+    }
+
+    function updateBulkOperationsVisibility() {
+        const checkedItems = document.querySelectorAll('.item-checkbox:checked');
+        if (checkedItems.length > 0) {
+            bulkOperationsCard.style.display = 'block';
+            selectedCountSpan.textContent = checkedItems.length;
+        } else {
+            bulkOperationsCard.style.display = 'none';
+        }
+    }
+
+    // Bulk Operations Functions
+    window.bulkDelete = function() {
+        const selectedIds = getSelectedIds();
+        if (selectedIds.length === 0) {
+            alert('Please select items to delete');
+            return;
+        }
+
+        if (!confirm(`Are you sure you want to delete ${selectedIds.length} selected item(s)?`)) {
+            return;
+        }
+
+        // Send delete request
+        fetch('{{ route("barang.bulk-delete") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            },
+            body: JSON.stringify({ ids: selectedIds })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error deleting items: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while deleting items');
+        });
+    };
+
+    window.bulkUpdateCategory = function() {
+        const selectedIds = getSelectedIds();
+        if (selectedIds.length === 0) {
+            alert('Please select items to update');
+            return;
+        }
+
+        const categorySelect = `
+            <select id="bulkCategorySelect" class="form-select">
+                <option value="">Choose Category...</option>
+                @foreach($kategoris as $kategori)
+                    <option value="{{ $kategori->id }}">{{ $kategori->nama_kategori }}</option>
+                @endforeach
+            </select>
+        `;
+
+        showBulkModal('Update Category', categorySelect, function() {
+            const categoryId = document.getElementById('bulkCategorySelect').value;
+            if (!categoryId) {
+                alert('Please select a category');
+                return;
+            }
+
+            performBulkUpdate(selectedIds, { kategori_id: categoryId });
+        });
+    };
+
+    window.bulkUpdateLocation = function() {
+        const selectedIds = getSelectedIds();
+        if (selectedIds.length === 0) {
+            alert('Please select items to update');
+            return;
+        }
+
+        const locationSelect = `
+            <select id="bulkLocationSelect" class="form-select">
+                <option value="">Choose Location...</option>
+                @foreach($lokasis as $lokasi)
+                    <option value="{{ $lokasi->id }}">{{ $lokasi->nama_lokasi }}</option>
+                @endforeach
+            </select>
+        `;
+
+        showBulkModal('Update Location', locationSelect, function() {
+            const locationId = document.getElementById('bulkLocationSelect').value;
+            if (!locationId) {
+                alert('Please select a location');
+                return;
+            }
+
+            performBulkUpdate(selectedIds, { lokasi_id: locationId });
+        });
+    };
+
+    window.bulkExport = function() {
+        const selectedIds = getSelectedIds();
+        if (selectedIds.length === 0) {
+            alert('Please select items to export');
+            return;
+        }
+
+        // Create form and submit
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{{ route("barang.bulk-export") }}';
+        
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = '_token';
+        csrfInput.value = document.querySelector('meta[name="csrf-token"]').content;
+        form.appendChild(csrfInput);
+
+        selectedIds.forEach(id => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'ids[]';
+            input.value = id;
+            form.appendChild(input);
+        });
+
+        document.body.appendChild(form);
+        form.submit();
+        document.body.removeChild(form);
+    };
+
+    function getSelectedIds() {
+        return Array.from(document.querySelectorAll('.item-checkbox:checked')).map(cb => cb.value);
+    }
+
+    function showBulkModal(title, content, onConfirm) {
+        const modal = document.createElement('div');
+        modal.className = 'modal fade';
+        modal.innerHTML = `
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">${title}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        ${content}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary" id="bulkConfirmBtn">Update</button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+        const bootstrapModal = new bootstrap.Modal(modal);
+        bootstrapModal.show();
+
+        document.getElementById('bulkConfirmBtn').addEventListener('click', function() {
+            onConfirm();
+            bootstrapModal.hide();
+        });
+
+        modal.addEventListener('hidden.bs.modal', function() {
+            document.body.removeChild(modal);
+        });
+    }
+
+    function performBulkUpdate(ids, updateData) {
+        fetch('{{ route("barang.bulk-update") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            },
+            body: JSON.stringify({ ids: ids, data: updateData })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error updating items: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while updating items');
+        });
+    }
+});
+</script>
+@endpush

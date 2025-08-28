@@ -17,6 +17,9 @@ use App\Http\Controllers\Admin\PermissionController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\ActivityLogController;
 use App\Http\Controllers\Admin\MaintenanceController;
+use App\Http\Controllers\Admin\MaintenanceScheduleController;
+use App\Http\Controllers\Admin\RecurringPaymentController;
+use App\Http\Controllers\Admin\PaymentScheduleController;
 
 
 /*
@@ -43,26 +46,31 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
 Route::middleware(['auth', 'verified'])->group(function () { // Menggunakan 'auth' dan 'verified' (opsional jika ingin email terverifikasi)
     // Route untuk profil pengguna
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::patch('/profile', [ProfileController::class, 'update'])->middleware('throttle:submit')->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->middleware('throttle:submit')->name('profile.destroy');
 
     // Resource routes untuk modul CRUD Anda
     Route::resource('barang', BarangController::class);
+    
+    // Bulk operations routes
+    Route::post('/barang/bulk-delete', [BarangController::class, 'bulkDelete'])->middleware('throttle:submit')->name('barang.bulk-delete');
+    Route::post('/barang/bulk-update', [BarangController::class, 'bulkUpdate'])->middleware('throttle:submit')->name('barang.bulk-update');
+    Route::post('/barang/bulk-export', [BarangController::class, 'bulkExport'])->name('barang.bulk-export');
     Route::resource('kategori', KategoriController::class);
     Route::resource('unit', UnitController::class);
     Route::resource('lokasi', LokasiController::class);
 
-    // === ROUTE UNTUK MANAJEMEN STOK ===
+    // === ROUTE UNTUK MANAJEMEN STOK (dengan rate limiting) ===
     Route::get('/stok/pergerakan', [StockMovementController::class, 'index'])->name('stok.pergerakan.index'); // Daftar Riwayat Pergerakan Stok
     Route::get('/stok/masuk/create', [StockMovementController::class, 'createMasuk'])->name('stok.masuk.create'); // Form Barang Masuk
-    Route::post('/stok/masuk', [StockMovementController::class, 'storeMasuk'])->name('stok.masuk.store'); // Simpan Barang Masuk
+    Route::post('/stok/masuk', [StockMovementController::class, 'storeMasuk'])->middleware('throttle:submit')->name('stok.masuk.store'); // Simpan Barang Masuk
 
     Route::get('/stok/keluar/create', [StockMovementController::class, 'createKeluar'])->name('stok.keluar.create');
-    Route::post('/stok/keluar', [StockMovementController::class, 'storeKeluar'])->name('stok.keluar.store');
+    Route::post('/stok/keluar', [StockMovementController::class, 'storeKeluar'])->middleware('throttle:submit')->name('stok.keluar.store');
 
     // TAMBAHKAN ROUTE INI UNTUK KOREKSI STOK:
     Route::get('/stok/koreksi/create', [StockMovementController::class, 'createAdjustment'])->name('stok.koreksi.create');
-    Route::post('/stok/koreksi', [StockMovementController::class, 'storeAdjustment'])->name('stok.koreksi.store');
+    Route::post('/stok/koreksi', [StockMovementController::class, 'storeAdjustment'])->middleware('throttle:submit')->name('stok.koreksi.store');
 
         // === ROUTE UNTUK MANAJEMEN PENGGUNA OLEH ADMIN ===
     // Kita bisa grouping dengan prefix 'admin' agar lebih rapi URL-nya
@@ -72,23 +80,39 @@ Route::middleware(['auth', 'verified'])->group(function () { // Menggunakan 'aut
         // Permission CRUD routes juga akan ada di sini nanti
         Route::resource('permissions', PermissionController::class);
         Route::resource('maintenances', MaintenanceController::class);
+        
+        // Route untuk MaintenanceSchedule
+        Route::get('/maintenances/{maintenance}/schedules', [MaintenanceScheduleController::class, 'show'])->name('maintenances.schedules');
+        Route::patch('/maintenance-schedules/{schedule}/complete', [MaintenanceScheduleController::class, 'markCompleted'])->middleware('throttle:submit')->name('maintenance-schedules.complete');
+        Route::patch('/maintenance-schedules/{schedule}/cancel', [MaintenanceScheduleController::class, 'markCancelled'])->middleware('throttle:submit')->name('maintenance-schedules.cancel');
+        Route::patch('/maintenance-schedules/{schedule}', [MaintenanceScheduleController::class, 'update'])->middleware('throttle:submit')->name('maintenance-schedules.update');
+        
+        // Route untuk RecurringPayment
+        Route::resource('payments', RecurringPaymentController::class);
+        
+        // Route untuk PaymentSchedule
+        Route::get('/payments/{payment}/schedules', [PaymentScheduleController::class, 'show'])->name('payments.schedules');
+        Route::patch('/payment-schedules/{schedule}/paid', [PaymentScheduleController::class, 'markPaid'])->middleware('throttle:submit')->name('payment-schedules.paid');
+        Route::patch('/payment-schedules/{schedule}/overdue', [PaymentScheduleController::class, 'markOverdue'])->middleware('throttle:submit')->name('payment-schedules.overdue');
+        Route::patch('/payment-schedules/{schedule}/cancel', [PaymentScheduleController::class, 'markCancelled'])->middleware('throttle:submit')->name('payment-schedules.cancel');
+        Route::patch('/payment-schedules/{schedule}', [PaymentScheduleController::class, 'update'])->middleware('throttle:submit')->name('payment-schedules.update');
 
         // === PINDAHKAN SEMUA ROUTE MANAJEMEN PENGAJUAN KE DALAM GRUP INI ===
         Route::get('/pengajuan-barang', [ItemRequestController::class, 'adminIndex'])->name('pengajuan.barang.index');
         Route::get('/pengajuan-barang/{itemRequest}', [ItemRequestController::class, 'adminShow'])->name('pengajuan.barang.show');
-        Route::post('/pengajuan-barang/{itemRequest}/approve', [ItemRequestController::class, 'approve'])->name('pengajuan.barang.approve');
-        Route::post('/pengajuan-barang/{itemRequest}/reject', [ItemRequestController::class, 'reject'])->name('pengajuan.barang.reject');
-        Route::post('/pengajuan-barang/{itemRequest}/process', [ItemRequestController::class, 'process'])->name('pengajuan.barang.process');
-        Route::put('/pengajuan-barang/{itemRequest}/return', [ItemRequestController::class, 'storeReturn'])->name('pengajuan.barang.return');
+        Route::post('/pengajuan-barang/{itemRequest}/approve', [ItemRequestController::class, 'approve'])->middleware('throttle:submit')->name('pengajuan.barang.approve');
+        Route::post('/pengajuan-barang/{itemRequest}/reject', [ItemRequestController::class, 'reject'])->middleware('throttle:submit')->name('pengajuan.barang.reject');
+        Route::post('/pengajuan-barang/{itemRequest}/process', [ItemRequestController::class, 'process'])->middleware('throttle:submit')->name('pengajuan.barang.process');
+        Route::put('/pengajuan-barang/{itemRequest}/return', [ItemRequestController::class, 'storeReturn'])->middleware('throttle:submit')->name('pengajuan.barang.return');
         Route::get('activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');
     });
 
-    // === ROUTE UNTUK PENGAJUAN BARANG OLEH PENGGUNA ===
+    // === ROUTE UNTUK PENGAJUAN BARANG OLEH PENGGUNA (dengan rate limiting) ===
     Route::get('/pengajuan-barang/pilih-tipe', [ItemRequestController::class, 'pilihTipe'])->name('pengajuan.barang.pilihTipe');
     Route::get('/pengajuan-barang/create/{tipe}', [ItemRequestController::class, 'create'])->name('pengajuan.barang.create');
     Route::get('/pengajuan-barang', [ItemRequestController::class, 'myRequests'])->name('pengajuan.barang.index');
-    Route::post('/pengajuan-barang', [ItemRequestController::class, 'store'])->name('pengajuan.barang.store');
-    Route::put('/pengajuan-barang/{itemRequest}/cancel', [ItemRequestController::class, 'cancelOwnRequest'])->name('pengajuan.barang.cancel');
+    Route::post('/pengajuan-barang', [ItemRequestController::class, 'store'])->middleware('throttle:submit')->name('pengajuan.barang.store');
+    Route::put('/pengajuan-barang/{itemRequest}/cancel', [ItemRequestController::class, 'cancelOwnRequest'])->middleware('throttle:submit')->name('pengajuan.barang.cancel');
     // Jika Anda tidak menggunakan halaman detail untuk user biasa, sebaiknya hapus route 'show' ini untuk menghindari kebingungan
     // Route::get('/pengajuan-barang/{itemRequest}', [ItemRequestController::class, 'show'])->name('pengajuan.barang.show'); 
 

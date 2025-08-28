@@ -85,6 +85,7 @@
                                 @endcan
                                 @can('maintenance-manage')
                                     <li><a class="dropdown-item {{ request()->routeIs('admin.maintenances.*') ? 'active' : '' }}" href="{{ route('admin.maintenances.index') }}">Jadwal Maintenance</a></li>
+                                    <li><a class="dropdown-item {{ request()->routeIs('admin.payments.*') ? 'active' : '' }}" href="{{ route('admin.payments.index') }}">Pembayaran Rutin</a></li>
                                 @endcan
                             </ul>
                         </li>

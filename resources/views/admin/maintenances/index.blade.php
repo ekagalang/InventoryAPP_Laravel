@@ -80,6 +80,9 @@
                                 </td>
                                 <td class="text-nowrap">
                                     <a href="{{ route('admin.maintenances.show', $item->id) }}" class="btn btn-info btn-sm" title="Lihat Detail"><i class="bi bi-eye"></i></a>
+                                    @if($item->is_recurring)
+                                        <a href="{{ route('admin.maintenances.schedules', $item->id) }}" class="btn btn-primary btn-sm" title="Lihat Jadwal"><i class="bi bi-calendar-event"></i></a>
+                                    @endif
                                     <a href="{{ route('admin.maintenances.edit', $item->id) }}" class="btn btn-warning btn-sm" title="Edit"><i class="bi bi-pencil-square"></i></a>
                                     <form action="{{ route('admin.maintenances.destroy', $item->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Yakin hapus jadwal ini?');">
                                         @csrf

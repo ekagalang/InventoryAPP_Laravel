@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Maintenance;
+use App\Models\MaintenanceSchedule;
 use App\Models\Barang;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -55,6 +56,10 @@ class MaintenanceController extends Controller
             'biaya' => 'nullable|numeric|min:0',
             'status' => 'required|in:Dijadwalkan,Selesai,Dibatalkan',
             'lampiran' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:2048',
+            'recurrence_interval' => 'nullable|integer|min:1|max:24',
+            'recurrence_unit' => 'nullable|in:bulan,tahun',
+            'max_occurrences' => 'nullable|integer|min:1|max:60',
+            'recurring_end_date' => 'nullable|date|after:tanggal_maintenance',
         ]);
 
         $data = $request->except('lampiran'); // Ambil semua data kecuali file
@@ -64,6 +69,12 @@ class MaintenanceController extends Controller
         if (!$data['is_recurring']) {
             $data['recurrence_interval'] = null;
             $data['recurrence_unit'] = null;
+            $data['max_occurrences'] = null;
+            $data['recurring_end_date'] = null;
+        } else {
+            // Cast ke integer untuk menghindari error Carbon
+            $data['recurrence_interval'] = (int) $request->recurrence_interval;
+            $data['max_occurrences'] = $request->max_occurrences ? (int) $request->max_occurrences : null;
         }
 
         if ($request->hasFile('lampiran')) {
@@ -71,7 +82,12 @@ class MaintenanceController extends Controller
             $data['lampiran'] = $path;
         }
         
-        Maintenance::create($data);
+        $maintenance = Maintenance::create($data);
+
+        // Jika maintenance berulang, buat jadwal otomatis
+        if ($maintenance->is_recurring) {
+            $this->generateRecurringSchedules($maintenance);
+        }
 
         return redirect()->route('admin.maintenances.index')->with('success', 'Jadwal maintenance berhasil ditambahkan.');
     }
@@ -92,6 +108,10 @@ class MaintenanceController extends Controller
             'biaya' => 'nullable|numeric|min:0',
             'status' => 'required|in:Dijadwalkan,Selesai,Dibatalkan',
             'lampiran' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:2048',
+            'recurrence_interval' => 'nullable|integer|min:1|max:24',
+            'recurrence_unit' => 'nullable|in:bulan,tahun',
+            'max_occurrences' => 'nullable|integer|min:1|max:60',
+            'recurring_end_date' => 'nullable|date|after:tanggal_maintenance',
         ]);
 
         $data = $request->except('lampiran');
@@ -100,6 +120,12 @@ class MaintenanceController extends Controller
         if (!$data['is_recurring']) {
             $data['recurrence_interval'] = null;
             $data['recurrence_unit'] = null;
+            $data['max_occurrences'] = null;
+            $data['recurring_end_date'] = null;
+        } else {
+            // Cast ke integer untuk menghindari error Carbon
+            $data['recurrence_interval'] = (int) $request->recurrence_interval;
+            $data['max_occurrences'] = $request->max_occurrences ? (int) $request->max_occurrences : null;
         }
 
         if ($request->hasFile('lampiran')) {
@@ -138,5 +164,45 @@ class MaintenanceController extends Controller
         $maintenance->load('barang', 'pencatat');
 
         return view('admin.maintenances.show', compact('maintenance'));
+    }
+
+    private function generateRecurringSchedules(Maintenance $maintenance)
+    {
+        if (!$maintenance->is_recurring) {
+            return;
+        }
+
+        $startDate = $maintenance->tanggal_maintenance->copy();
+        $currentDate = $startDate->copy();
+        $count = 0;
+        $maxOccurrences = (int) ($maintenance->max_occurrences ?: 12);
+        $endDate = $maintenance->recurring_end_date;
+        $interval = (int) $maintenance->recurrence_interval;
+        
+        while ($count < $maxOccurrences) {
+            // Generate jadwal berikutnya
+            if ($maintenance->recurrence_unit === 'bulan') {
+                $currentDate = $currentDate->addMonths($interval);
+            } elseif ($maintenance->recurrence_unit === 'tahun') {
+                $currentDate = $currentDate->addYears($interval);
+            } else {
+                break; // Unit tidak valid
+            }
+            
+            // Cek apakah sudah melewati batas tanggal
+            if ($endDate && $currentDate->gt($endDate)) {
+                break;
+            }
+            
+            // Buat jadwal
+            MaintenanceSchedule::create([
+                'maintenance_id' => $maintenance->id,
+                'scheduled_date' => $currentDate->copy(),
+                'estimated_cost' => (float) ($maintenance->biaya ?? 0),
+                'status' => 'pending',
+            ]);
+            
+            $count++;
+        }
     }
 }

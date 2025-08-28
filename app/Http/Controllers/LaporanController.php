@@ -11,6 +11,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Facades\Excel; // <-- IMPORT FACADE EXCEL
 use App\Models\Maintenance;
+use App\Models\RecurringPayment;
+use App\Models\MaintenanceSchedule;
+use App\Models\PaymentSchedule;
 // use App\Exports\BarangStokExport;
 
 class LaporanController extends Controller
@@ -114,7 +117,7 @@ class LaporanController extends Controller
         // Data untuk grafik barang masuk per bulan (6 bulan terakhir)
         $barangMasukPerBulan = StockMovement::where('tipe_pergerakan', 'masuk')
             ->whereDate('tanggal_pergerakan', '>=', now()->subMonths(6))
-            ->selectRaw('YEAR(tanggal_pergerakan) as tahun, MONTH(tanggal_pergerakan) as bulan, SUM(jumlah) as total_masuk')
+            ->selectRaw('YEAR(tanggal_pergerakan) as tahun, MONTH(tanggal_pergerakan) as bulan, SUM(kuantitas) as total_masuk')
             ->groupByRaw('YEAR(tanggal_pergerakan), MONTH(tanggal_pergerakan)')
             ->orderByRaw('YEAR(tanggal_pergerakan), MONTH(tanggal_pergerakan)')
             ->get();
@@ -173,7 +176,7 @@ class LaporanController extends Controller
         // Data untuk grafik barang keluar per bulan (6 bulan terakhir)
         $barangKeluarPerBulan = StockMovement::where('tipe_pergerakan', 'keluar')
             ->whereDate('tanggal_pergerakan', '>=', now()->subMonths(6))
-            ->selectRaw('YEAR(tanggal_pergerakan) as tahun, MONTH(tanggal_pergerakan) as bulan, SUM(jumlah) as total_keluar')
+            ->selectRaw('YEAR(tanggal_pergerakan) as tahun, MONTH(tanggal_pergerakan) as bulan, SUM(kuantitas) as total_keluar')
             ->groupByRaw('YEAR(tanggal_pergerakan), MONTH(tanggal_pergerakan)')
             ->orderByRaw('YEAR(tanggal_pergerakan), MONTH(tanggal_pergerakan)')
             ->get();
@@ -210,55 +213,134 @@ class LaporanController extends Controller
 
         $filterBarangId = $request->input('barang_id');
         $filterStatus = $request->input('status');
+        $filterKategoriPembayaran = $request->input('kategori_pembayaran');
         $filterTanggalMulai = $request->input('tanggal_mulai');
         $filterTanggalAkhir = $request->input('tanggal_akhir');
+        $filterJenis = $request->input('jenis', 'semua'); // maintenance, pembayaran, semua
 
-        $query = Maintenance::with(['barang', 'pencatat'])->latest();
+        // === DATA MAINTENANCE ===
+        $maintenanceQuery = Maintenance::with(['barang', 'pencatat'])->latest();
 
-        // Terapkan filter
         if ($filterBarangId) {
-            $query->where('barang_id', $filterBarangId);
+            $maintenanceQuery->where('barang_id', $filterBarangId);
         }
-        if ($filterStatus) {
-            $query->where('status', $filterStatus);
+        if ($filterStatus && in_array($filterStatus, ['Dijadwalkan', 'Selesai', 'Dibatalkan'])) {
+            $maintenanceQuery->where('status', $filterStatus);
         }
         if ($filterTanggalMulai) {
-            $query->whereDate('tanggal_maintenance', '>=', $filterTanggalMulai);
+            $maintenanceQuery->whereDate('tanggal_maintenance', '>=', $filterTanggalMulai);
         }
         if ($filterTanggalAkhir) {
-            $query->whereDate('tanggal_maintenance', '<=', $filterTanggalAkhir);
+            $maintenanceQuery->whereDate('tanggal_maintenance', '<=', $filterTanggalAkhir);
         }
 
-        // Hitung total biaya HANYA dari hasil yang terfilter
-        $totalBiaya = $query->sum('biaya');
+        $maintenances = ($filterJenis === 'pembayaran') ? collect() : $maintenanceQuery->paginate(15, ['*'], 'maintenance_page')->appends($request->query());
 
-        $maintenances = $query->paginate(15)->appends($request->query());
+        // === DATA PEMBAYARAN RUTIN ===
+        $paymentQuery = RecurringPayment::with(['user'])->latest();
 
-        // Data untuk dropdown filter
-        $barangs = Barang::orderBy('nama_barang', 'asc')->get();
+        if ($filterKategoriPembayaran) {
+            $paymentQuery->where('kategori', $filterKategoriPembayaran);
+        }
+        if ($filterStatus && in_array($filterStatus, ['aktif', 'nonaktif', 'selesai'])) {
+            $paymentQuery->where('status', $filterStatus);
+        }
+        if ($filterTanggalMulai) {
+            $paymentQuery->whereDate('tanggal_mulai', '>=', $filterTanggalMulai);
+        }
+        if ($filterTanggalAkhir) {
+            $paymentQuery->whereDate('tanggal_mulai', '<=', $filterTanggalAkhir);
+        }
 
-        // Data untuk grafik maintenance berdasarkan status
+        $payments = ($filterJenis === 'maintenance') ? collect() : $paymentQuery->paginate(15, ['*'], 'payment_page')->appends($request->query());
+
+        // === STATISTIK TERPADU ===
+        // Total biaya maintenance (terealisasi dan akan datang)
+        $totalMaintenanceTerealisasi = Maintenance::where('status', 'Selesai')->sum('biaya');
+        $totalMaintenanceWillCome = Maintenance::where('status', 'Dijadwalkan')->sum('biaya');
+        
+        // Total dari jadwal maintenance berulang
+        $totalMaintenanceScheduleTerealisasi = MaintenanceSchedule::where('status', 'completed')->sum('actual_cost');
+        $totalMaintenanceScheduleWillCome = MaintenanceSchedule::where('status', 'pending')->sum('estimated_cost');
+
+        // Total pembayaran rutin (terealisasi dan akan datang) 
+        $totalPaymentTerealisasi = PaymentSchedule::where('status', 'paid')->sum('actual_amount');
+        $totalPaymentWillCome = PaymentSchedule::where('status', 'pending')->sum('expected_amount');
+
+        // Grand Total
+        $grandTotalTerealisasi = $totalMaintenanceTerealisasi + $totalMaintenanceScheduleTerealisasi + $totalPaymentTerealisasi;
+        $grandTotalWillCome = $totalMaintenanceWillCome + $totalMaintenanceScheduleWillCome + $totalPaymentWillCome;
+
+        // === DATA GRAFIK ===
+        // Maintenance per status
         $maintenancePerStatus = Maintenance::selectRaw('status, COUNT(*) as jumlah')
             ->groupBy('status')
             ->get();
 
-        // Data untuk grafik biaya maintenance per bulan (6 bulan terakhir)
-        $biayaMaintenancePerBulan = Maintenance::whereDate('tanggal_maintenance', '>=', now()->subMonths(6))
-            ->selectRaw('YEAR(tanggal_maintenance) as tahun, MONTH(tanggal_maintenance) as bulan, SUM(biaya) as total_biaya')
-            ->groupByRaw('YEAR(tanggal_maintenance), MONTH(tanggal_maintenance)')
-            ->orderByRaw('YEAR(tanggal_maintenance), MONTH(tanggal_maintenance)')
+        // Pembayaran per kategori
+        $paymentPerKategori = RecurringPayment::selectRaw('kategori, COUNT(*) as jumlah')
+            ->groupBy('kategori')
             ->get();
+
+        // Biaya gabungan per bulan (12 bulan dalam 1 tahun)
+        $biayaMaintenancePerBulan = Maintenance::whereDate('tanggal_maintenance', '>=', now()->subMonths(12))
+            ->selectRaw('YEAR(tanggal_maintenance) as tahun, MONTH(tanggal_maintenance) as bulan, SUM(biaya) as total_biaya, "maintenance" as jenis')
+            ->groupByRaw('YEAR(tanggal_maintenance), MONTH(tanggal_maintenance)')
+            ->get();
+
+        $biayaPembayaranPerBulan = PaymentSchedule::where('status', 'paid')
+            ->whereDate('paid_date', '>=', now()->subMonths(12))
+            ->selectRaw('YEAR(paid_date) as tahun, MONTH(paid_date) as bulan, SUM(actual_amount) as total_biaya, "pembayaran" as jenis')
+            ->groupByRaw('YEAR(paid_date), MONTH(paid_date)')
+            ->get();
+
+        // Gabungkan data biaya per bulan
+        $biayaGabunganPerBulan = $biayaMaintenancePerBulan->concat($biayaPembayaranPerBulan)
+            ->groupBy(function ($item) {
+                return $item->tahun . '-' . sprintf('%02d', $item->bulan);
+            })
+            ->map(function ($group) {
+                $maintenance = $group->where('jenis', 'maintenance')->sum('total_biaya');
+                $pembayaran = $group->where('jenis', 'pembayaran')->sum('total_biaya');
+                $tanggal = $group->first();
+                
+                return (object) [
+                    'tahun' => $tanggal->tahun,
+                    'bulan' => $tanggal->bulan,
+                    'total_maintenance' => $maintenance,
+                    'total_pembayaran' => $pembayaran,
+                    'total_gabungan' => $maintenance + $pembayaran
+                ];
+            })
+            ->sortBy(function ($item) {
+                return $item->tahun . sprintf('%02d', $item->bulan);
+            })
+            ->values();
+
+        // Data untuk dropdown filter
+        $barangs = Barang::orderBy('nama_barang', 'asc')->get();
 
         return view('laporan.maintenance', compact(
             'maintenances',
+            'payments',
             'barangs',
-            'totalBiaya', // Kirim total biaya ke view
+            'totalMaintenanceTerealisasi',
+            'totalMaintenanceWillCome', 
+            'totalMaintenanceScheduleTerealisasi',
+            'totalMaintenanceScheduleWillCome',
+            'totalPaymentTerealisasi',
+            'totalPaymentWillCome',
+            'grandTotalTerealisasi',
+            'grandTotalWillCome',
             'filterBarangId',
             'filterStatus',
+            'filterKategoriPembayaran',
             'filterTanggalMulai',
             'filterTanggalAkhir',
+            'filterJenis',
             'maintenancePerStatus',
-            'biayaMaintenancePerBulan'
+            'paymentPerKategori',
+            'biayaGabunganPerBulan'
         ));
     }
 

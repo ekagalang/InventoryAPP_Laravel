@@ -26,13 +26,63 @@ class BarangController extends Controller
 
         $query = Barang::with(['kategori', 'unit', 'lokasi']);
 
-        // TAMBAHKAN BLOK FILTER INI
-        if ($request->filled('tipe_item_filter')) {
-            $query->where('tipe_item', $request->tipe_item_filter);
+        // Advanced Search & Filtering
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('nama_barang', 'like', "%{$search}%")
+                  ->orWhere('kode_barang', 'like', "%{$search}%")
+                  ->orWhere('deskripsi', 'like', "%{$search}%");
+            });
         }
 
-        $barangs = Barang::with(['kategori', 'unit', 'lokasi'])->orderBy('created_at', 'desc')->paginate(10);
-        return view('barang.index', compact('barangs'));
+        if ($request->filled('kategori_id')) {
+            $query->where('kategori_id', $request->kategori_id);
+        }
+
+        if ($request->filled('unit_id')) {
+            $query->where('unit_id', $request->unit_id);
+        }
+
+        if ($request->filled('lokasi_id')) {
+            $query->where('lokasi_id', $request->lokasi_id);
+        }
+
+        if ($request->filled('tipe_item')) {
+            $query->where('tipe_item', $request->tipe_item);
+        }
+
+        if ($request->filled('stok_min')) {
+            $query->where('stok', '>=', $request->stok_min);
+        }
+
+        if ($request->filled('stok_max')) {
+            $query->where('stok', '<=', $request->stok_max);
+        }
+
+        if ($request->filled('low_stock_only') && $request->low_stock_only) {
+            $query->whereRaw('stok <= stok_minimum');
+        }
+
+        // Sorting
+        $sortField = $request->get('sort', 'created_at');
+        $sortDirection = $request->get('direction', 'desc');
+        $query->orderBy($sortField, $sortDirection);
+
+        $barangs = $query->paginate(15)->appends($request->query());
+        
+        // Data for filters
+        $kategoris = Kategori::orderBy('nama_kategori', 'asc')->get();
+        $units = Unit::orderBy('nama_unit', 'asc')->get();
+        $lokasis = Lokasi::orderBy('nama_lokasi', 'asc')->get();
+        
+        // Current filters for the view
+        $currentFilters = $request->only([
+            'search', 'kategori_id', 'unit_id', 'lokasi_id', 'tipe_item', 
+            'stok_min', 'stok_max', 'low_stock_only', 'sort', 'direction'
+        ]);
+
+        return view('barang.index', compact('barangs', 'kategoris', 'units', 'lokasis', 'currentFilters'));
     }
 
     public function create()
@@ -155,5 +205,142 @@ class BarangController extends Controller
         }
         $barang->delete();
         return redirect()->route('barang.index')->with('success', 'Barang berhasil dihapus!');
+    }
+
+    /**
+     * Bulk delete multiple barang
+     */
+    public function bulkDelete(Request $request)
+    {
+        if (!Auth::user()->hasPermissionTo('barang-delete')) {
+            return response()->json(['success' => false, 'message' => 'Access denied'], 403);
+        }
+
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:barangs,id'
+        ]);
+
+        try {
+            $deletedCount = 0;
+            foreach ($request->ids as $id) {
+                $barang = Barang::findOrFail($id);
+                
+                // Delete image if exists
+                if ($barang->gambar) {
+                    $imagePath = public_path('images/barangs/' . $barang->gambar);
+                    if (file_exists($imagePath)) {
+                        unlink($imagePath);
+                    }
+                }
+                
+                $barang->delete();
+                $deletedCount++;
+            }
+
+            return response()->json([
+                'success' => true, 
+                'message' => "{$deletedCount} item(s) deleted successfully"
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false, 
+                'message' => 'Error deleting items: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Bulk update multiple barang
+     */
+    public function bulkUpdate(Request $request)
+    {
+        if (!Auth::user()->hasPermissionTo('barang-edit')) {
+            return response()->json(['success' => false, 'message' => 'Access denied'], 403);
+        }
+
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:barangs,id',
+            'data' => 'required|array'
+        ]);
+
+        try {
+            $updateData = $request->data;
+            $updatedCount = Barang::whereIn('id', $request->ids)->update($updateData);
+
+            return response()->json([
+                'success' => true, 
+                'message' => "{$updatedCount} item(s) updated successfully"
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false, 
+                'message' => 'Error updating items: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Bulk export selected barang
+     */
+    public function bulkExport(Request $request)
+    {
+        if (!Auth::user()->hasPermissionTo('barang-list')) {
+            return response()->json(['success' => false, 'message' => 'Access denied'], 403);
+        }
+
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:barangs,id'
+        ]);
+
+        try {
+            $barangs = Barang::with(['kategori', 'unit', 'lokasi'])
+                            ->whereIn('id', $request->ids)
+                            ->get();
+
+            $filename = 'selected_barangs_' . date('Y-m-d_H-i-s') . '.csv';
+            
+            $headers = [
+                'Content-Type' => 'text/csv',
+                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            ];
+
+            $callback = function() use ($barangs) {
+                $file = fopen('php://output', 'w');
+                
+                // CSV headers
+                fputcsv($file, [
+                    'ID', 'Nama Barang', 'Kode Barang', 'Tipe Item', 
+                    'Kategori', 'Unit', 'Lokasi', 'Stok', 'Stok Minimum', 
+                    'Deskripsi', 'Created At'
+                ]);
+                
+                // CSV data
+                foreach ($barangs as $barang) {
+                    fputcsv($file, [
+                        $barang->id,
+                        $barang->nama_barang,
+                        $barang->kode_barang,
+                        ucfirst($barang->tipe_item),
+                        $barang->kategori->nama_kategori ?? '',
+                        $barang->unit->nama_unit ?? '',
+                        $barang->lokasi->nama_lokasi ?? '',
+                        $barang->stok,
+                        $barang->stok_minimum,
+                        $barang->deskripsi,
+                        $barang->created_at->format('Y-m-d H:i:s')
+                    ]);
+                }
+                
+                fclose($file);
+            };
+
+            return response()->stream($callback, 200, $headers);
+            
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Error exporting items: ' . $e->getMessage());
+        }
     }
 }

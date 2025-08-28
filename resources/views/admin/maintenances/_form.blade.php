@@ -40,16 +40,27 @@
                     </div>
 
                     <div id="recurring-details" class="{{ old('is_recurring', $maintenance->is_recurring ?? false) ? '' : 'd-none' }}">
-                        <div class="input-group input-group-sm">
+                        <div class="input-group input-group-sm mb-2">
                             <span class="input-group-text">Ulangi setiap</span>
-                            <input type="number" class="form-control" name="recurrence_interval" value="{{ old('recurrence_interval', $maintenance->recurrence_interval ?? 1) }}" min="1">
+                            <input type="number" class="form-control" name="recurrence_interval" value="{{ old('recurrence_interval', $maintenance->recurrence_interval ?? 1) }}" min="1" max="24">
                             <select class="form-select" name="recurrence_unit">
-                                <option value="hari" {{ old('recurrence_unit', $maintenance->recurrence_unit ?? '') == 'hari' ? 'selected' : '' }}>Hari</option>
-                                <option value="minggu" {{ old('recurrence_unit', $maintenance->recurrence_unit ?? '') == 'minggu' ? 'selected' : '' }}>Minggu</option>
                                 <option value="bulan" {{ old('recurrence_unit', $maintenance->recurrence_unit ?? 'bulan') == 'bulan' ? 'selected' : '' }}>Bulan</option>
                                 <option value="tahun" {{ old('recurrence_unit', $maintenance->recurrence_unit ?? '') == 'tahun' ? 'selected' : '' }}>Tahun</option>
                             </select>
                         </div>
+                        
+                        <div class="row">
+                            <div class="col-6">
+                                <label class="form-label small">Maksimal berapa kali:</label>
+                                <input type="number" class="form-control form-control-sm" name="max_occurrences" value="{{ old('max_occurrences', $maintenance->max_occurrences ?? 12) }}" min="1" max="60" placeholder="12">
+                                <small class="text-muted">Max 60 kali</small>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small">Atau sampai tanggal:</label>
+                                <input type="date" class="form-control form-control-sm" name="recurring_end_date" value="{{ old('recurring_end_date', isset($maintenance) && $maintenance->recurring_end_date ? $maintenance->recurring_end_date->format('Y-m-d') : '') }}">
+                            </div>
+                        </div>
+                        <small class="text-info d-block mt-1">Jadwal akan berhenti jika salah satu batasan tercapai</small>
                     </div>
                 </div>
                  <div class="mb-3">
