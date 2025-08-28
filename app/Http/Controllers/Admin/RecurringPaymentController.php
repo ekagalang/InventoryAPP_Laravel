@@ -131,6 +131,13 @@ class RecurringPaymentController extends Controller
 
         $payment->update($data);
 
+        // Hapus jadwal lama yang belum lunas dan buat ulang
+        PaymentSchedule::where('recurring_payment_id', $payment->id)
+            ->where('status', 'pending')
+            ->delete();
+
+        $this->generatePaymentSchedules($payment);
+
         return redirect()->route('admin.payments.index')->with('success', 'Pembayaran rutin berhasil diperbarui.');
     }
 

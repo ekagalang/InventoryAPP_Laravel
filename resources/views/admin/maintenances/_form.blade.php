@@ -19,9 +19,9 @@
         <div class="card shadow-sm">
             <div class="card-body">
                 <div class="mb-3">
-                    <label for="tanggal_maintenance" class="form-label">Tanggal <span class="text-danger">*</span></label>
-                    <input type="date" class="form-control @error('tanggal_maintenance') is-invalid @enderror" id="tanggal_maintenance" name="tanggal_maintenance" value="{{ old('tanggal_maintenance', isset($maintenance) ? \Carbon\Carbon::parse($maintenance->tanggal_maintenance)->format('Y-m-d') : '') }}" required>
-                    @error('tanggal_maintenance') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    <label for="tanggal_mulai" class="form-label">Tanggal Mulai <span class="text-danger">*</span></label>
+                    <input type="date" class="form-control @error('tanggal_mulai') is-invalid @enderror" id="tanggal_mulai" name="tanggal_mulai" value="{{ old('tanggal_mulai', isset($maintenance) && $maintenance->tanggal_mulai ? \Carbon\Carbon::parse($maintenance->tanggal_mulai)->format('Y-m-d') : '') }}" required>
+                    @error('tanggal_mulai') <div class="invalid-feedback">{{ $message }}</div> @enderror
                 </div>
                 <div class="mb-3">
                     <label for="barang_id" class="form-label">Barang Terkait (Opsional)</label>
@@ -65,7 +65,7 @@
                 </div>
                  <div class="mb-3">
                     <label for="biaya" class="form-label">Biaya (Rp)</label>
-                    <input type="number" class="form-control @error('biaya') is-invalid @enderror" id="biaya" name="biaya" value="{{ old('biaya', $maintenance->biaya ?? 0) }}" min="0">
+                    <input type="text" class="form-control format-rupiah @error('biaya') is-invalid @enderror" id="biaya" name="biaya" value="{{ old('biaya', $maintenance->biaya ?? 0) }}" min="0">
                     @error('biaya') <div class="invalid-feedback">{{ $message }}</div> @enderror
                 </div>
                 <div class="mb-3">

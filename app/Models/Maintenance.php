@@ -10,19 +10,12 @@ class Maintenance extends Model
     use HasFactory;
 
     protected $fillable = [
-        'nama_perbaikan',
-        'deskripsi',
         'barang_id',
-        'tanggal_maintenance',
-        'biaya',
+        'deskripsi',
+        'tanggal_mulai',
+        'frekuensi_hari',
+        'tanggal_berikutnya',
         'status',
-        'lampiran',
-        'is_recurring',
-        'recurrence_interval',
-        'recurrence_unit',
-        'max_occurrences',
-        'recurring_end_date',
-        'user_id',
     ];
 
     // Relasi ke model User (siapa yang mencatat)

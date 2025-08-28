@@ -85,7 +85,9 @@
                                 @endcan
                                 @can('maintenance-manage')
                                     <li><a class="dropdown-item {{ request()->routeIs('admin.maintenances.*') ? 'active' : '' }}" href="{{ route('admin.maintenances.index') }}">Jadwal Maintenance</a></li>
-                                    <li><a class="dropdown-item {{ request()->routeIs('admin.payments.*') ? 'active' : '' }}" href="{{ route('admin.payments.index') }}">Pembayaran Rutin</a></li>
+                                    @if(Route::has('admin.payments.index'))
+                                        <li><a class="dropdown-item {{ request()->routeIs('admin.payments.*') ? 'active' : '' }}" href="{{ route('admin.payments.index') }}">Pembayaran Rutin</a></li>
+                                    @endif
                                 @endcan
                             </ul>
                         </li>
@@ -265,5 +267,48 @@
 
 @stack('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Function to format number to Rupiah format
+    function formatRupiah(angka) {
+        if (typeof angka === 'number') {
+            angka = angka.toString();
+        }
+        let number_string = angka.replace(/[^\d]/g, '').toString(),
+            sisa = number_string.length % 3,
+            rupiah = number_string.substr(0, sisa),
+            ribuan = number_string.substr(sisa).match(/\d{3}/gi);
+
+        if (ribuan) {
+            let separator = sisa ? '.' : '';
+            rupiah += separator + ribuan.join('.');
+        }
+
+        return rupiah;
+    }
+
+    // Add event listener to all inputs with class 'format-rupiah'
+    document.querySelectorAll('.format-rupiah').forEach(function(input) {
+        input.addEventListener('keyup', function(e) {
+            // Format the value
+            input.value = formatRupiah(input.value);
+        });
+        // Initial format on page load if value exists
+        if(input.value) {
+            input.value = formatRupiah(input.value);
+        }
+    });
+
+    // Before submitting any form, un-format the rupiah inputs
+    document.querySelectorAll('form').forEach(function(form) {
+        form.addEventListener('submit', function(e) {
+            form.querySelectorAll('.format-rupiah').forEach(function(input) {
+                // Remove formatting before submit
+                input.value = input.value.replace(/\./g, '');
+            });
+        });
+    });
+});
+</script>
 </body>
 </html>

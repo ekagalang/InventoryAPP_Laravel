@@ -13,6 +13,8 @@ use App\Observers\MaintenanceObserver;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Blade;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -50,6 +52,9 @@ class AppServiceProvider extends ServiceProvider
 
         // === RATE LIMITING CONFIGURATION ===
         $this->configureRateLimiting();
+
+        // === CUSTOM BLADE DIRECTIVES ===
+        $this->registerBladeDirectives();
         // === AKHIR VIEW COMPOSER ===
     }
 
@@ -76,6 +81,22 @@ class AppServiceProvider extends ServiceProvider
         // Rate limit untuk web routes
         RateLimiter::for('web', function (Request $request) {
             return Limit::perMinute(120)->by($request->user()?->id ?: $request->ip());
+        });
+    }
+
+    /**
+     * Register custom Blade directives
+     */
+    protected function registerBladeDirectives(): void
+    {
+        // Custom directive untuk check route exists
+        Blade::if('route', function ($routeName) {
+            return Route::has($routeName);
+        });
+
+        // Custom directive untuk safe route generation
+        Blade::directive('safeRoute', function ($expression) {
+            return "<?php echo Route::has($expression) ? route($expression) : '#'; ?>";
         });
     }
 }

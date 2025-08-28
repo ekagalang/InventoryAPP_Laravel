@@ -275,7 +275,11 @@
                                             <td>{{ $payments->firstItem() + $key }}</td>
                                             <td>{{ \Carbon\Carbon::parse($item->tanggal_mulai)->isoFormat('DD MMM YYYY') }}</td>
                                             <td>
-                                                <a href="{{ route('admin.payments.show', $item->id) }}">{{ $item->nama_pembayaran }}</a>
+                                                @if(Route::has('admin.payments.show'))
+                                                    <a href="{{ route('admin.payments.show', $item->id) }}">{{ $item->nama_pembayaran }}</a>
+                                                @else
+                                                    {{ $item->nama_pembayaran }}
+                                                @endif
                                             </td>
                                             <td>
                                                 <span class="badge 

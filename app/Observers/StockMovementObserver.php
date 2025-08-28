@@ -42,7 +42,17 @@ class StockMovementObserver
         $stockMovement->stok_setelahnya = $barang->stok;
         $stockMovement->saveQuietly(); // Simpan tanpa memicu observer lagi
 
-        // ... (logika pengiriman notifikasi stok minimum tetap di sini) ...
+        // Cek dan kirim notifikasi stok minimum.
+        // Hanya kirim jika stok jatuh di bawah minimum pada transaksi ini dan tipe pergerakan adalah pengurangan.
+        if (in_array($stockMovement->tipe_pergerakan, ['keluar', 'koreksi-kurang']) && $barang->stok_minimum > 0) {
+            if ($barang->stok <= $barang->stok_minimum && $stokSebelumnya > $barang->stok_minimum) {
+                Log::info('[OBSERVER] Stok barang ' . $barang->nama_barang . ' di bawah minimum. Mengirim notifikasi.');
+                $usersToNotify = User::role(['Admin', 'StafGudang'])->get();
+                if ($usersToNotify->isNotEmpty()) {
+                    Notification::send($usersToNotify, new LowStockNotification($barang));
+                }
+            }
+        }
     }
 
     /**

@@ -210,7 +210,7 @@
                                                 <div class="modal-body">
                                                     <div class="mb-3">
                                                         <label class="form-label">Biaya Aktual (Rp)</label>
-                                                        <input type="number" class="form-control" name="actual_cost" value="{{ $schedule->estimated_cost }}" min="0">
+                                                        <input type="text" class="form-control format-rupiah" name="actual_cost" value="{{ $schedule->estimated_cost }}" min="0">
                                                         <small class="text-muted">Estimasi: Rp {{ number_format($schedule->estimated_cost, 0, ',', '.') }}</small>
                                                     </div>
                                                     <div class="mb-3">

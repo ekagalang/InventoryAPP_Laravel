@@ -52,14 +52,14 @@ class MaintenanceController extends Controller
             'nama_perbaikan' => 'required|string|max:255',
             'deskripsi' => 'nullable|string',
             'barang_id' => 'nullable|exists:barangs,id',
-            'tanggal_maintenance' => 'required|date',
+            'tanggal_mulai' => 'required|date',
             'biaya' => 'nullable|numeric|min:0',
             'status' => 'required|in:Dijadwalkan,Selesai,Dibatalkan',
             'lampiran' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:2048',
             'recurrence_interval' => 'nullable|integer|min:1|max:24',
             'recurrence_unit' => 'nullable|in:bulan,tahun',
             'max_occurrences' => 'nullable|integer|min:1|max:60',
-            'recurring_end_date' => 'nullable|date|after:tanggal_maintenance',
+            'recurring_end_date' => 'nullable|date|after:tanggal_mulai',
         ]);
 
         $data = $request->except('lampiran'); // Ambil semua data kecuali file
@@ -104,14 +104,14 @@ class MaintenanceController extends Controller
             'nama_perbaikan' => 'required|string|max:255',
             'deskripsi' => 'nullable|string',
             'barang_id' => 'nullable|exists:barangs,id',
-            'tanggal_maintenance' => 'required|date',
+            'tanggal_mulai' => 'required|date',
             'biaya' => 'nullable|numeric|min:0',
             'status' => 'required|in:Dijadwalkan,Selesai,Dibatalkan',
             'lampiran' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:2048',
             'recurrence_interval' => 'nullable|integer|min:1|max:24',
             'recurrence_unit' => 'nullable|in:bulan,tahun',
             'max_occurrences' => 'nullable|integer|min:1|max:60',
-            'recurring_end_date' => 'nullable|date|after:tanggal_maintenance',
+            'recurring_end_date' => 'nullable|date|after:tanggal_mulai',
         ]);
 
         $data = $request->except('lampiran');
@@ -139,6 +139,15 @@ class MaintenanceController extends Controller
         }
 
         $maintenance->update($data);
+
+        // Hapus jadwal lama yang belum selesai dan buat ulang jika berulang
+        MaintenanceSchedule::where('maintenance_id', $maintenance->id)
+            ->where('status', 'pending')
+            ->delete();
+
+        if ($maintenance->is_recurring) {
+            $this->generateRecurringSchedules($maintenance);
+        }
 
         return redirect()->route('admin.maintenances.index')->with('success', 'Jadwal maintenance berhasil diperbarui.');
     }
@@ -172,7 +181,7 @@ class MaintenanceController extends Controller
             return;
         }
 
-        $startDate = $maintenance->tanggal_maintenance->copy();
+        $startDate = $maintenance->tanggal_mulai->copy();
         $currentDate = $startDate->copy();
         $count = 0;
         $maxOccurrences = (int) ($maintenance->max_occurrences ?: 12);

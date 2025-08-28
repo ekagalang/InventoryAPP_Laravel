@@ -174,39 +174,51 @@ class ItemRequestController extends Controller
         // Hanya pengajuan dengan status 'Diajukan' yang bisa disetujui
         if ($itemRequest->status !== 'Diajukan') {
             return redirect()->route('admin.pengajuan.barang.show', $itemRequest->id)
-                             ->with('error', 'Pengajuan ini tidak bisa disetujui (status saat ini: '.$itemRequest->status.').');
+                             ->with('error', 'Pengajuan ini tidak bisa disetujui (status saat ini: ' . $itemRequest->status . ').');
         }
 
-        $request->validate([
+        $validatedData = $request->validate([
             'kuantitas_disetujui' => 'required|integer|min:1|max:' . $itemRequest->kuantitas_diminta, // Tidak boleh lebih dari yang diminta
             'catatan_approval' => 'nullable|string|max:1000',
         ]);
 
-        // Validasi tambahan: kuantitas disetujui tidak boleh melebihi stok barang saat ini
-        $barang = Barang::findOrFail($itemRequest->barang_id);
-        if ($barang->stok < $request->kuantitas_disetujui) {
-             return redirect()->route('admin.pengajuan.barang.show', $itemRequest->id)
-                             ->withErrors(['kuantitas_disetujui' => 'Kuantitas disetujui (' . $request->kuantitas_disetujui . ') melebihi stok tersedia saat ini (Stok: ' . $barang->stok . '). Harap update stok barang atau sesuaikan kuantitas.'])
-                             ->withInput();
+        try {
+            DB::beginTransaction();
+
+            // Kunci baris barang untuk mencegah race condition
+            $barang = Barang::where('id', $itemRequest->barang_id)->lockForUpdate()->firstOrFail();
+
+            // Validasi kuantitas disetujui tidak boleh melebihi stok barang saat ini
+            if ($barang->stok < $validatedData['kuantitas_disetujui']) {
+                DB::rollBack();
+                return redirect()->route('admin.pengajuan.barang.show', $itemRequest->id)
+                    ->withErrors(['kuantitas_disetujui' => 'Kuantitas disetujui (' . $validatedData['kuantitas_disetujui'] . ') melebihi stok tersedia saat ini (Stok: ' . $barang->stok . '). Harap update stok barang atau sesuaikan kuantitas.'])
+                    ->withInput();
+            }
+
+            $itemRequest->status = 'Disetujui';
+            $itemRequest->kuantitas_disetujui = $validatedData['kuantitas_disetujui'];
+            $itemRequest->approved_by = Auth::id();
+            $itemRequest->approved_at = now();
+            $itemRequest->catatan_approval = $validatedData['catatan_approval'];
+            $itemRequest->save();
+
+            DB::commit();
+
+            // Kirim notifikasi ke pemohon
+            if ($itemRequest->pemohon) { // Pastikan relasi pemohon ada
+                // Eager load relasi barang untuk data di notifikasi
+                $itemRequest->load('barang');
+                $itemRequest->pemohon->notify(new PengajuanStatusUpdateNotification($itemRequest));
+            }
+
+            return redirect()->route('admin.pengajuan.barang.show', $itemRequest->id)
+                ->with('success', 'Pengajuan barang telah disetujui.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->route('admin.pengajuan.barang.show', $itemRequest->id)
+                ->with('error', 'Terjadi kesalahan saat menyetujui pengajuan: ' . $e->getMessage());
         }
-
-
-        $itemRequest->status = 'Disetujui';
-        $itemRequest->kuantitas_disetujui = $request->kuantitas_disetujui;
-        $itemRequest->approved_by = Auth::id();
-        $itemRequest->approved_at = now();
-        $itemRequest->catatan_approval = $request->catatan_approval;
-        $itemRequest->save();
-
-        // Kirim notifikasi ke pemohon
-        if ($itemRequest->pemohon) { // Pastikan relasi pemohon ada
-        // Eager load relasi barang untuk data di notifikasi
-            $itemRequest->load('barang');
-            $itemRequest->pemohon->notify(new PengajuanStatusUpdateNotification($itemRequest));
-        }
-
-        return redirect()->route('admin.pengajuan.barang.show', $itemRequest->id)
-                         ->with('success', 'Pengajuan barang telah ditolak.');
     }
 
     /**
@@ -267,17 +279,19 @@ class ItemRequestController extends Controller
             'catatan_pemroses' => 'nullable|string|max:1000',
         ]);
 
-        // Cek stok terakhir SEBELUM membuat StockMovement.
-        // Ini penting karena StockMovementObserver akan langsung mengubah stok barang.
-        $barang = Barang::findOrFail($itemRequest->barang_id);
-        if ($barang->stok < $itemRequest->kuantitas_disetujui) {
-            return redirect()->route('admin.pengajuan.barang.show', $itemRequest->id)
-                             ->with('error', 'Gagal memproses: Stok barang saat ini ('.$barang->stok.') tidak mencukupi untuk kuantitas yang disetujui ('.$itemRequest->kuantitas_disetujui.'). Harap perbarui stok atau batalkan persetujuan.');
-        }
-
         // Gunakan database transaction untuk memastikan semua operasi berhasil atau semua dibatalkan
         DB::beginTransaction();
         try {
+            // KUNCI BARIS BARANG UNTUK MENCEGAH RACE CONDITION
+            $barang = Barang::where('id', $itemRequest->barang_id)->lockForUpdate()->firstOrFail();
+
+            // Cek stok terakhir SETELAH baris dikunci
+            if ($barang->stok < $itemRequest->kuantitas_disetujui) {
+                DB::rollBack(); // Batalkan transaksi sebelum redirect
+                return redirect()->route('admin.pengajuan.barang.show', $itemRequest->id)
+                                 ->with('error', 'Gagal memproses: Stok barang saat ini ('.$barang->stok.') tidak mencukupi untuk kuantitas yang disetujui ('.$itemRequest->kuantitas_disetujui.'). Harap perbarui stok atau batalkan persetujuan.');
+            }
+
             // 1. Buat record Stock Movement (barang keluar)
             // Observer akan otomatis mengupdate stok barang dan mengisi stok_sebelumnya/stok_setelahnya di StockMovement
             StockMovement::create([

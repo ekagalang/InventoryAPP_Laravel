@@ -59,7 +59,7 @@
 
                 <div class="mb-3">
                     <label for="nominal" class="form-label">Nominal (Rp) <span class="text-danger">*</span></label>
-                    <input type="number" class="form-control @error('nominal') is-invalid @enderror" id="nominal" name="nominal" value="{{ old('nominal', $payment->nominal ?? '') }}" min="0" step="0.01" required>
+                    <input type="text" class="form-control format-rupiah @error('nominal') is-invalid @enderror" id="nominal" name="nominal" value="{{ old('nominal', $payment->nominal ?? '') }}" min="0" required>
                     @error('nominal') <div class="invalid-feedback">{{ $message }}</div> @enderror
                 </div>
 

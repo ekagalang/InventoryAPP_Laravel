@@ -140,3 +140,11 @@ Route::middleware(['auth', 'verified'])->group(function () { // Menggunakan 'aut
 
 // Ini akan memuat route-route otentikasi (login, register, logout, dll.)
 require __DIR__.'/auth.php';
+
+// Fallback route for missing admin routes (production safety)
+Route::fallback(function () {
+    if (request()->is('admin/*')) {
+        return redirect()->route('dashboard')->with('error', 'Halaman yang Anda cari tidak tersedia atau sedang dalam maintenance.');
+    }
+    abort(404);
+});
