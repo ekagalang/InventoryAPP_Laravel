@@ -10,7 +10,7 @@ class RecurringPayment extends Model
     use HasFactory;
     
     protected $fillable = [
-        'nama_tagihan',
+        'nama_pembayaran',
         'deskripsi',
         'nominal',
         'tanggal_mulai', // Menambahkan tanggal mulai
