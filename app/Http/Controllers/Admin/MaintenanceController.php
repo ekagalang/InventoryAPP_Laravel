@@ -52,14 +52,14 @@ class MaintenanceController extends Controller
             'nama_perbaikan' => 'required|string|max:255',
             'deskripsi' => 'nullable|string',
             'barang_id' => 'nullable|exists:barangs,id',
-            'tanggal_mulai' => 'required|date',
+            'tanggal_maintenance' => 'required|date',
             'biaya' => 'nullable|numeric|min:0',
             'status' => 'required|in:Dijadwalkan,Selesai,Dibatalkan',
             'lampiran' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:2048',
             'recurrence_interval' => 'nullable|integer|min:1|max:24',
             'recurrence_unit' => 'nullable|in:bulan,tahun',
             'max_occurrences' => 'nullable|integer|min:1|max:60',
-            'recurring_end_date' => 'nullable|date|after:tanggal_mulai',
+            'recurring_end_date' => 'nullable|date|after:tanggal_maintenance',
         ]);
 
         $data = $request->except('lampiran'); // Ambil semua data kecuali file
@@ -104,14 +104,14 @@ class MaintenanceController extends Controller
             'nama_perbaikan' => 'required|string|max:255',
             'deskripsi' => 'nullable|string',
             'barang_id' => 'nullable|exists:barangs,id',
-            'tanggal_mulai' => 'required|date',
+            'tanggal_maintenance' => 'required|date',
             'biaya' => 'nullable|numeric|min:0',
             'status' => 'required|in:Dijadwalkan,Selesai,Dibatalkan',
             'lampiran' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:2048',
             'recurrence_interval' => 'nullable|integer|min:1|max:24',
             'recurrence_unit' => 'nullable|in:bulan,tahun',
             'max_occurrences' => 'nullable|integer|min:1|max:60',
-            'recurring_end_date' => 'nullable|date|after:tanggal_mulai',
+            'recurring_end_date' => 'nullable|date|after:tanggal_maintenance',
         ]);
 
         $data = $request->except('lampiran');
@@ -181,12 +181,21 @@ class MaintenanceController extends Controller
             return;
         }
 
-        $startDate = $maintenance->tanggal_mulai->copy();
+        $startDate = $maintenance->tanggal_maintenance->copy();
         $currentDate = $startDate->copy();
         $count = 0;
         $maxOccurrences = (int) ($maintenance->max_occurrences ?: 12);
         $endDate = $maintenance->recurring_end_date;
         $interval = (int) $maintenance->recurrence_interval;
+        
+        // Include the first/initial date as the first scheduled maintenance
+        MaintenanceSchedule::create([
+            'maintenance_id' => $maintenance->id,
+            'scheduled_date' => $currentDate->copy(),
+            'estimated_cost' => (float) ($maintenance->biaya ?? 0),
+            'status' => 'pending',
+        ]);
+        $count++;
         
         while ($count < $maxOccurrences) {
             // Generate jadwal berikutnya

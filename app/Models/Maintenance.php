@@ -13,10 +13,16 @@ class Maintenance extends Model
         'nama_perbaikan',
         'barang_id',
         'deskripsi',
-        'tanggal_mulai',
-        'frekuensi_hari',
-        'tanggal_berikutnya',
+        'tanggal_maintenance',
+        'biaya',
         'status',
+        'user_id',
+        'is_recurring',
+        'recurrence_interval',
+        'recurrence_unit',
+        'max_occurrences',
+        'recurring_end_date',
+        'lampiran',
     ];
 
     // Relasi ke model User (siapa yang mencatat)

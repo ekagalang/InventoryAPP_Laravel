@@ -12,10 +12,9 @@ class RecurringPayment extends Model
     protected $fillable = [
         'nama_pembayaran',
         'deskripsi',
+        'kategori',
         'nominal',
-        'tanggal_mulai', // Menambahkan tanggal mulai
-        'frekuensi_hari',
-        'tanggal_berikutnya',
+        'tanggal_mulai',
         'status',
         'penerima',
         'keterangan',

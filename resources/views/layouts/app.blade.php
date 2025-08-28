@@ -274,7 +274,13 @@ document.addEventListener('DOMContentLoaded', function() {
         if (typeof angka === 'number') {
             angka = angka.toString();
         }
-        let number_string = angka.replace(/[^\d]/g, '').toString(),
+        // Remove all non-digits and parse as float to handle decimals properly
+        let cleanNumber = angka.replace(/[^\d]/g, '');
+        if (!cleanNumber || cleanNumber === '0' || cleanNumber === '') {
+            return '';
+        }
+        
+        let number_string = cleanNumber.toString(),
             sisa = number_string.length % 3,
             rupiah = number_string.substr(0, sisa),
             ribuan = number_string.substr(sisa).match(/\d{3}/gi);
@@ -289,12 +295,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Add event listener to all inputs with class 'format-rupiah'
     document.querySelectorAll('.format-rupiah').forEach(function(input) {
-        input.addEventListener('keyup', function(e) {
-            // Format the value
-            input.value = formatRupiah(input.value);
+        input.addEventListener('input', function(e) {
+            let cursorPosition = input.selectionStart;
+            let oldValue = input.value;
+            let formatted = formatRupiah(input.value);
+            
+            if (formatted !== oldValue) {
+                input.value = formatted;
+                // Maintain cursor position
+                let newPosition = cursorPosition + (formatted.length - oldValue.length);
+                if (newPosition >= 0 && newPosition <= formatted.length) {
+                    input.setSelectionRange(newPosition, newPosition);
+                }
+            }
         });
+        
         // Initial format on page load if value exists
-        if(input.value) {
+        if(input.value && input.value !== '' && input.value !== '0') {
             input.value = formatRupiah(input.value);
         }
     });

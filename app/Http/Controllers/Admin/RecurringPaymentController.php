@@ -164,6 +164,15 @@ class RecurringPaymentController extends Controller
         $endDate = $payment->recurring_end_date;
         $interval = (int) $payment->recurrence_interval;
         
+        // Include the first/initial date as the first scheduled payment
+        PaymentSchedule::create([
+            'recurring_payment_id' => $payment->id,
+            'due_date' => $currentDate->copy(),
+            'expected_amount' => (float) $payment->nominal,
+            'status' => 'pending',
+        ]);
+        $count++;
+        
         while ($count < $maxOccurrences) {
             // Generate jadwal berikutnya
             if ($payment->recurrence_unit === 'hari') {
