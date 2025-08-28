@@ -51,14 +51,18 @@ class MaintenanceScheduleController extends Controller
     public function markCompleted(Request $request, MaintenanceSchedule $schedule)
     {
         $request->validate([
-            'actual_cost' => 'nullable|numeric|min:0',
+            'actual_cost' => 'required|numeric|min:0',
+            'completed_date' => 'required|date',
+            'work_method' => 'nullable|string',
             'notes' => 'nullable|string',
             'attachment' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:2048',
         ]);
 
         $data = [
             'status' => 'completed',
-            'actual_cost' => $request->actual_cost ?: $schedule->estimated_cost,
+            'actual_cost' => $request->actual_cost,
+            'completed_date' => $request->completed_date,
+            'work_method' => $request->work_method,
             'notes' => $request->notes,
             'completed_by' => Auth::id(),
             'completed_at' => now(),

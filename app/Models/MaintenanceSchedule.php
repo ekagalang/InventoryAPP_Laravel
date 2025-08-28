@@ -19,6 +19,8 @@ class MaintenanceSchedule extends Model
         'attachment',
         'completed_by',
         'completed_at',
+        'completed_date',
+        'work_method',
     ];
     
     protected $casts = [
@@ -26,6 +28,7 @@ class MaintenanceSchedule extends Model
         'estimated_cost' => 'decimal:2',
         'actual_cost' => 'decimal:2',
         'completed_at' => 'datetime',
+        'completed_date' => 'date',
     ];
     
     public function maintenance()

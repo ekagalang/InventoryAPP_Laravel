@@ -114,11 +114,13 @@
                             <tr>
                                 <th>No</th>
                                 <th>Tanggal Dijadwalkan</th>
-                                <th>Estimasi Biaya</th>
-                                <th>Biaya Aktual</th>
+                                <th>Estimasi</th>
+                                <th>Aktual</th>
                                 <th>Status</th>
+                                <th>Tgl Selesai</th>
+                                <th>Metode</th>
                                 <th>Catatan</th>
-                                <th>Diselesaikan Oleh</th>
+                                <th>Oleh</th>
                                 <th>Aksi</th>
                             </tr>
                         </thead>
@@ -159,7 +161,9 @@
                                             <span class="badge bg-danger">Dibatalkan</span>
                                         @endif
                                     </td>
-                                    <td>{{ $schedule->notes ?? '-' }}</td>
+                                    <td>{{ $schedule->completed_date ? $schedule->completed_date->format('d M Y') : '-' }}</td>
+                                    <td>{{ $schedule->work_method ?? '-' }}</td>
+                                    <td>{{ Str::limit($schedule->notes ?? '-', 30) }}</td>
                                     <td>
                                         @if($schedule->completedBy)
                                             {{ $schedule->completedBy->name }}
@@ -209,16 +213,32 @@
                                                 </div>
                                                 <div class="modal-body">
                                                     <div class="mb-3">
-                                                        <label class="form-label">Biaya Aktual (Rp)</label>
-                                                        <input type="text" class="form-control format-rupiah" name="actual_cost" value="{{ (int)$schedule->estimated_cost }}" min="0">
+                                                        <label class="form-label">Biaya Aktual (Rp) <span class="text-danger">*</span></label>
+                                                        <input type="number" class="form-control" name="actual_cost" value="{{ $schedule->estimated_cost }}" min="0" step="0.01" required>
                                                         <small class="text-muted">Estimasi: Rp {{ number_format($schedule->estimated_cost, 0, ',', '.') }}</small>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Tanggal Penyelesaian <span class="text-danger">*</span></label>
+                                                        <input type="date" class="form-control" name="completed_date" value="{{ now()->format('Y-m-d') }}" required>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Metode Pengerjaan</label>
+                                                        <select class="form-select" name="work_method">
+                                                            <option value="">-- Pilih Metode --</option>
+                                                            <option value="Internal">Internal</option>
+                                                            <option value="Vendor Eksternal">Vendor Eksternal</option>
+                                                            <option value="Service Center">Service Center</option>
+                                                            <option value="Teknisi Khusus">Teknisi Khusus</option>
+                                                            <option value="DIY">DIY (Do It Yourself)</option>
+                                                            <option value="Lainnya">Lainnya</option>
+                                                        </select>
                                                     </div>
                                                     <div class="mb-3">
                                                         <label class="form-label">Catatan</label>
                                                         <textarea class="form-control" name="notes" rows="3"></textarea>
                                                     </div>
                                                     <div class="mb-3">
-                                                        <label class="form-label">Lampiran (Opsional)</label>
+                                                        <label class="form-label">Lampiran Bukti (Opsional)</label>
                                                         <input type="file" class="form-control" name="attachment" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">
                                                     </div>
                                                 </div>
